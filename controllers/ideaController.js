@@ -1,5 +1,36 @@
 const Idea = require('../models/idea');
 const axios = require('axios');
+exports.updateStatus = async (req, res) => {
+try {
+    const { status } = req.body;
+
+    // لو rejected نحذف الفكرة
+    if (status === "rejected") {
+    await Idea.findByIdAndDelete(req.params.id);
+
+    return res.json({
+        message: "Idea rejected and deleted"
+    });
+    }
+
+    // لو accepted نخليها active
+    const idea = await Idea.findByIdAndUpdate(
+    req.params.id,
+    { status: "accepted" },
+    { new: true }
+    );
+
+    res.json({
+    message: "Idea accepted and active",
+    idea
+    });
+
+} catch (err) {
+    res.status(500).json(err.message);
+}
+};
+
+
 
 exports.addIdea = async (req, res) => {
 try {

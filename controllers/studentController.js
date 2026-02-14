@@ -1,36 +1,35 @@
-const Doctor = require("../models/doctor");
+const User = require("../models/student");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 
-
-// REGISTER
+// Register
 exports.register = async (req, res) => {
-  console.log(req.body);
 
   const { name, email, password } = req.body;
 
   if (!email.endsWith("@modernacademy.edu.eg")) {
-    return res.status(400).json("Modern Academy only");
+    return res.status(400).json("Modern Academy students only");
   }
 
   try {
-    const existingDoctor = await Doctor.findOne({ email });
 
-    if (existingDoctor) {
-      return res.status(400).json("Email already saved");
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json("Email already exists");
     }
 
+    // 🔥 hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const doctor = await Doctor.create({
+    const user = await User.create({
       name,
       email,
-      password: hashedPassword,
-      role: "doctor"
+      password: hashedPassword
     });
 
-    res.status(201).json("Doctor created");
+    res.status(201).json("Student created");
 
   } catch (err) {
     res.status(400).json(err.message);
@@ -38,10 +37,10 @@ exports.register = async (req, res) => {
 };
 
 
-// LOGIN
+// Login
 exports.login = async (req, res) => {
 
-  const user = await Doctor.findOne({
+  const user = await User.findOne({
     email: req.body.email
   });
 
@@ -59,7 +58,7 @@ exports.login = async (req, res) => {
   const token = jwt.sign(
     {
       id: user._id,
-      role: "doctor"
+      role: "student"
     },
     "SECRET_KEY"
   );

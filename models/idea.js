@@ -7,7 +7,12 @@ const ideaSchema = new mongoose.Schema({
   Tools: String,
   Specialization: String,
   Introduction: String,
-  FutureWork: String
+  FutureWork: String,
+  status: {
+    type: String,
+    enum: ['pending', 'accepted', 'rejected'],
+    default: 'pending'
+  }
 });
 
 module.exports = mongoose.model('Idea', ideaSchema);
