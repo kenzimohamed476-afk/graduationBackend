@@ -1,19 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const ideaController = require('../controllers/ideaController');
 
-router.post('/', ideaController.addIdea);
-const { addIdea, getIdeas, updateStatus } = require('../controllers/ideaController');
+const { addIdea, getIdeas, updateStatus } =
+require("../controllers/ideaController");
 
-router.put('/status/:id', updateStatus);
-module.exports = router;
 const auth = require("../middleware/auth");
 
-router.put("/idea/:id/status",
-auth,
-updateStatus
-);
+// add idea
+router.post("/", addIdea);
 
+// update status (doctor only)
+router.put("/status/:id", auth, updateStatus);
+
+module.exports = router;
 
 
 

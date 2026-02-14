@@ -9,11 +9,12 @@ const ideaSchema = new mongoose.Schema({
   Introduction: String,
   FutureWork: String,
   status: {
-    type: String,
-    enum: ['pending', 'accepted', 'rejected'],
-    default: 'pending'
+  type: String,
+  default: "pending"
+}
+
   }
-});
+);
 
 module.exports = mongoose.model('Idea', ideaSchema);
 
