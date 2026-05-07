@@ -1,21 +1,37 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const ideaSchema = new mongoose.Schema({
-  Name: String,
-  Year: String,
-  Supervisors: String,
-  Tools: String,
-  Specialization: String,
-  Introduction: String,
-  FutureWork: String,
-  status: {
-  type: String,
-  default: "pending"
-}
+const ideaSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true
+    },
 
-  }
+    year: {
+      type: Number,
+      required: true
+    },
+
+    description: {
+      type: String,
+      required: true
+    },
+
+    tools: [
+      {
+        type: String
+      }
+    ],
+
+    specializations: [
+      {
+        type: String,
+    
+      }
+    ]
+  },
+  { timestamps: true }
 );
 
-module.exports = mongoose.model('Idea', ideaSchema);
-
-
+module.exports = mongoose.model("Idea", ideaSchema);

@@ -1,23 +1,49 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
+const studentSchema = new mongoose.Schema({
 name: {
-type: String,
-required: true,
-},
+    type: String,
+    required: true
+  },
+
 email: {
     type: String,
-required: true,
-unique: true,
-},
+    unique: true
+  },
+  phone: {
+    type: String,
+    unique: true
+  },
+
 password: {
     type: String,
-    required: true,
-},
-  // role: {
-  //     type: String,
-  //     enum: ['student', 'doctor', 'admin']
-  // }
-});
+    required: true
+  },
 
-module.exports = mongoose.model("Student", userSchema);
+  collegeCode: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+
+
+  specialization: {
+  type: String,
+  enum: [ "Backend","Frontend","Mobile","AI","IoT","Network","Cyber Security"],
+  // required: true
+},
+
+  team_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Team",
+    default: null
+  },
+
+  isLeader: {
+    type: Boolean,
+    default: false
+  }
+
+}, { timestamps: true });
+
+module.exports = mongoose.model("Student", studentSchema);
