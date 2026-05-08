@@ -2,79 +2,68 @@ const CurrentProject = require("../models/currentProject");
 const PreviousProject = require("../models/previousProject");
 const Team = require("../models/team");
 const Student = require("../models/student");
+const TimePlan = require("../models/timePlan"); // 🔥 كان ناقص
 const axios = require("axios");
 
+
 // =====================
-// ADD PROJECT + CREATE TEAM 🔥
+// ADD PROJECT + CREATE TEAM
 // =====================
 exports.addProject = async (req, res) => {
   try {
-
-    // 🔐 AUTH
     const student = await Student.findById(req.user.id);
     if (!student) {
-      return res.status(404).json({
-        message: "Student not found"
-      });
+      return res.status(404).json({ message: "Student not found" });
     }
 
-    // 🟢 DATA
-    const {
-      title,
-      description,
-      tools,
-      specialization,
-      doctor_id,
-      ta_id,
-      year,
-      team
-    } = req.body;
+    const { title, description, tools, specialization, doctor_id, ta_id, year, team } = req.body;
 
-    // ❗ validation
     if (!title || !description || !team) {
-      return res.status(400).json({
-        message: "Missing required fields"
-      });
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // 🔐 CHECK LEADER
-    if (req.user.id !== team.leader_id) {
+    // 🔥 compare by collegeCode
+    if (Number(req.user.collegeCode) !== Number(team.leader_collegeCode)) {
       return res.status(403).json({
         message: "Only the selected leader can submit the project"
       });
     }
 
-    // ❗ VALIDATE LEADER IN MEMBERS
-    if (!team.members.some(m => m.id === team.leader_id)) {
+    // validate leader
+    if (!team.members.some(m => Number(m.collegeCode) === Number(team.leader_collegeCode))) {
       return res.status(400).json({
         message: "Leader must be one of the team members"
       });
     }
 
-    // ❗ REMOVE DUPLICATES
-    const ids = team.members.map(m => m.id);
-    const uniqueMembers = [...new Set(ids)];
-
-    if (uniqueMembers.length !== ids.length) {
+    // remove duplicates
+    const codes = team.members.map(m => Number(m.collegeCode));
+    if (new Set(codes).size !== codes.length) {
       return res.status(400).json({
         message: "Duplicate members not allowed"
       });
     }
 
-    // ❗ CHECK MEMBERS EXIST
+    // get students
     const students = await Student.find({
-      _id: { $in: ids }
+      collegeCode: { $in: codes }
     });
 
-    if (students.length !== ids.length) {
+    if (students.length !== codes.length) {
       return res.status(400).json({
         message: "One or more students not found"
       });
     }
 
-    // ❗ CHECK NOT IN TEAM
+    // map collegeCode → _id
+    const idMap = {};
+    students.forEach(s => idMap[s.collegeCode] = s._id);
+
+    const memberIds = codes.map(c => idMap[c]);
+
+    // already in team
     const existingMembers = await Student.find({
-      _id: { $in: ids },
+      _id: { $in: memberIds },
       team_id: { $ne: null }
     });
 
@@ -84,39 +73,11 @@ exports.addProject = async (req, res) => {
       });
     }
 
-    // ❗ LIMIT SIZE
-    if (ids.length > 5) {
+    if (memberIds.length > 5) {
       return res.status(400).json({
         message: "Max 5 members allowed"
       });
     }
-
-    // 🧑‍🤝‍🧑 CREATE TEAM
-    const newTeam = await Team.create({
-      leader_id: team.leader_id,
-      members: ids
-    });
-
-    // 👤 UPDATE STUDENTS
-    for (let member of team.members) {
-      if (!member.specialization) {
-        return res.status(400).json({
-          message: "Each member must have specialization"
-        });
-      }
-
-      await Student.findByIdAndUpdate(member.id, {
-        team_id: newTeam._id,
-        specialization: member.specialization
-      });
-    }
-
-    // 🟢 SET LEADER
-    await Student.findByIdAndUpdate(team.leader_id, {
-      isLeader: true
-    });
-
-    const team_id = newTeam._id;
 
     // =====================
     // 🤖 AI CHECK
@@ -139,7 +100,6 @@ exports.addProject = async (req, res) => {
 
       const results = response.data.results || [];
 
-      // 🔍 أعلى similarity
       for (let rec of results) {
         if (rec.similarity > similarity) {
           similarity = rec.similarity;
@@ -151,22 +111,53 @@ exports.addProject = async (req, res) => {
       console.log("AI ERROR:", err.message);
     }
 
-    // 🧠 نجيب تفاصيل المشروع من DB
     let similarProjectDetails = null;
 
     if (similarProject) {
       similarProjectDetails = await PreviousProject.findById(similarProject.id);
     }
-    if (similarity >= 80) {
-    return res.status(400).json({
-      message: "Project rejected due to high similarity",
-      similarity,
-      similarProject: similarProjectDetails
-    });
-}
-    
 
-    // 💾 SAVE PROJECT
+    // 🔥 threshold
+    if (similarity >= 50) {
+      return res.status(400).json({
+        message: "Project rejected due to similarity",
+        similarity,
+        similarProject: similarProjectDetails
+      });
+    }
+
+    // =====================
+    // CREATE TEAM
+    // =====================
+    const newTeam = await Team.create({
+      leader_id: idMap[team.leader_collegeCode],
+      members: memberIds
+    });
+
+    for (let member of team.members) {
+      if (!member.specialization) {
+        return res.status(400).json({
+          message: "Each member must have specialization"
+        });
+      }
+
+      await Student.findOneAndUpdate(
+        { collegeCode: Number(member.collegeCode) },
+        {
+          team_id: newTeam._id,
+          specialization: member.specialization
+        }
+      );
+    }
+
+    await Student.findOneAndUpdate(
+      { collegeCode: Number(team.leader_collegeCode) },
+      { isLeader: true }
+    );
+
+    // =====================
+    // SAVE PROJECT
+    // =====================
     const savedProject = await CurrentProject.create({
       title,
       description,
@@ -174,17 +165,16 @@ exports.addProject = async (req, res) => {
       specialization,
       doctor_id: doctor_id || null,
       ta_id: ta_id || null,
-      team_id,
+      team_id: newTeam._id,
       year,
       status: "pending",
       similarity_score: similarity,
     });
 
-    // 📤 RESPONSE
     res.status(201).json({
       message: "Project created successfully",
       similarity,
-      similarProject: similarProjectDetails, // 🔥 التفاصيل الكاملة
+      similarProject: similarProjectDetails,
       savedProject,
     });
 
@@ -192,6 +182,11 @@ exports.addProject = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+// =====================
+// UPDATE STATUS
+// =====================
 exports.updateStatus = async (req, res) => {
   if (req.user.role !== "doctor" && req.user.role !== "ta") {
     return res.status(403).json({
@@ -232,6 +227,11 @@ exports.updateStatus = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+// =====================
+// ADMIN APPROVE
+// =====================
 exports.adminApproveProject = async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({
@@ -257,6 +257,11 @@ exports.adminApproveProject = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+// =====================
+// UPLOAD DOCS
+// =====================
 exports.uploadDocumentation = async (req, res) => {
   try {
     const { documentation } = req.body;
@@ -273,6 +278,11 @@ exports.uploadDocumentation = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+// =====================
+// FINALIZE
+// =====================
 exports.finalizeProject = async (req, res) => {
   try {
     const project = await CurrentProject.findById(req.params.id);
@@ -298,6 +308,11 @@ exports.finalizeProject = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+// =====================
+// DOCTOR DASHBOARD
+// =====================
 exports.getDoctorProjectsWithPlans = async (req, res) => {
   try {
     if (req.user.role !== "doctor") {

@@ -10,18 +10,17 @@ const jwt = require("jsonwebtoken");
 // =====================
 exports.addStudent = async (req, res) => {
   try {
-    //  validation 
+    // ✅ Validation
     const { error } = studentSchema.validate(req.body);
-
     if (error) {
       return res.status(400).json({
         message: error.details[0].message
       });
     }
 
-    //  check duplicate (collegeCode)
+    // ✅ Check duplicate
     const existingStudent = await Student.findOne({
-      collegeCode: req.body.collegeCode
+      collegeCode: Number(req.body.collegeCode)
     });
 
     if (existingStudent) {
@@ -30,25 +29,21 @@ exports.addStudent = async (req, res) => {
       });
     }
 
-    //  hash password 
+    // ✅ Hash password
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-    // create student 
+    // ✅ Create student
     const student = await Student.create({
       name: req.body.name,
-      //email: req.body.email,
-     // phone: req.body.phone,
-      collegeCode: req.body.collegeCode,
-     // specialization: req.body.specialization,
+      collegeCode: Number(req.body.collegeCode), // 🔥 توحيد النوع
       password: hashedPassword,
-      isLeader: req.body.isLeader
+      isLeader: false
     });
 
-    // حذف الباسورد من الريسبونس
+    // ❌ Remove password
     const studentData = student.toObject();
     delete studentData.password;
 
-    // response
     res.status(201).json({
       message: "Student created successfully",
       student: studentData
@@ -67,19 +62,16 @@ exports.login = async (req, res) => {
   try {
     const { collegeCode, password } = req.body;
 
-    // check لو ناقص بيانات
     if (!collegeCode || !password) {
       return res.status(400).json({
         message: "College code and password are required"
       });
     }
 
-    //  نجيب الطالب (مع تحويل الرقم لو جاي string)
+    // ✅ Get student
     const student = await Student.findOne({
       collegeCode: Number(collegeCode)
     });
-    
-    //Invalid college code or password 
 
     if (!student) {
       return res.status(401).json({
@@ -87,7 +79,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    //  مقارنة الباسورد
+    // ✅ Compare password
     const isMatch = await bcrypt.compare(password, student.password);
 
     if (!isMatch) {
@@ -96,21 +88,21 @@ exports.login = async (req, res) => {
       });
     }
 
-    //  إنشاء توكن
+    // ✅ Create token
     const token = jwt.sign(
       {
         id: student._id,
-        role: "student" // نحدد نوع المستخدم
+        collegeCode: student.collegeCode,
+        role: "student"
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    //  حذف الباسورد
+    // ❌ Remove password
     const studentData = student.toObject();
     delete studentData.password;
 
-    //  response
     res.json({
       message: "Login successful",
       token,
@@ -123,15 +115,13 @@ exports.login = async (req, res) => {
 };
 
 
+// =====================
 // STUDENTS WITHOUT TEAM
 // =====================
 exports.getStudentsWithoutTeam = async (req, res) => {
   try {
-    // الطلبة اللي مش في أي تيم
     const students = await Student.find({ team_id: null });
-
     res.json(students);
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -143,13 +133,9 @@ exports.getStudentsWithoutTeam = async (req, res) => {
 // =====================
 exports.getStudentsWithoutProject = async (req, res) => {
   try {
-    // 🟢 نجيب التيمات اللي معندهاش مشروع
     const teams = await Team.find({ project_code: null });
-
-    // ناخد الـ IDs بتاعت التيمات
     const teamIds = teams.map(t => t._id);
 
-    // 🟢 نجيب الطلبة اللي في التيمات دي
     const students = await Student.find({
       team_id: { $in: teamIds }
     });
@@ -167,13 +153,11 @@ exports.getStudentsWithoutProject = async (req, res) => {
 // =====================
 exports.getAdminDashboard = async (req, res) => {
   try {
-    // الطلبة بدون team
     const studentsWithoutTeam = await Student.find({ team_id: null });
 
-    // التيمات بدون مشروع
     const teamsWithoutProject = await Team.find({ project_code: null })
-      .populate("leader_id") // يجيب بيانات الليدر
-      .populate("members");  // يجيب أعضاء التيم
+      .populate("leader_id")
+      .populate("members");
 
     res.json({
       studentsWithoutTeam,
