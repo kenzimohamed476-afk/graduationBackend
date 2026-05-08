@@ -125,7 +125,7 @@ exports.getDoctors = async (req, res) => {
 
     const doctors = await User.find({
       role: "doctor"
-    }).select("name email");
+    }).select("name email specialization")
 
     res.json({
       doctors
@@ -143,7 +143,7 @@ exports.getTAs = async (req, res) => {
 
     const tas = await User.find({
       role: "ta"
-    }).select("name email");
+    }).select("name email specialization")
 
     res.json({
       tas

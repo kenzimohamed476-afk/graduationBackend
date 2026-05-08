@@ -6,10 +6,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  
+
   specialization: {
-  type: String,
-  default: null
+  type: String
 },
 
   email: {

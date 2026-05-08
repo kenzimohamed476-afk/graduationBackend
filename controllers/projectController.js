@@ -126,11 +126,9 @@ exports.addProject = async (req, res) => {
     let similarity = 0;
     let similarProject = null;
 
-    const previousProjects =
-      await PreviousProject.find();
+    const previousProjects =await PreviousProject.find();
 
-    const currentProjects =
-      await CurrentProject.find();
+    const currentProjects =await CurrentProject.find();
 
     const allProjects = [
       ...previousProjects,
@@ -141,7 +139,7 @@ exports.addProject = async (req, res) => {
     try {
 
       const response = await axios.post(
-        "https://ai-project-2n3z.onrender.com/check",
+        "https://ai-project-production-29cf.up.railway.app/check",
         {
           problem: description,
 
