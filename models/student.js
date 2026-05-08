@@ -6,10 +6,7 @@ name: {
     required: true
   },
 
-email: {
-    type: String,
-    unique: true
-  },
+
   phone: {
     type: String,
     unique: true

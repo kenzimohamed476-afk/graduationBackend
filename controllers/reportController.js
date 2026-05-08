@@ -55,13 +55,12 @@ exports.addDoctorComment = async (req, res) => {
       });
     }
 
-    // 🟢 تحديث
     report.doctor_comment = req.body.comment;
     report.reviewed = true;
 
     await report.save();
 
-    // 🔔 notify leader
+    //  notify leader
     await Notification.create({
       user_id: report.student_id,
       message: "Doctor reviewed your report"

@@ -35,12 +35,13 @@ exports.addStudent = async (req, res) => {
     // ✅ Create student
     const student = await Student.create({
       name: req.body.name,
-      collegeCode: Number(req.body.collegeCode), // 🔥 توحيد النوع
+      phone: req.body.phone,
+      collegeCode: Number(req.body.collegeCode),
       password: hashedPassword,
       isLeader: false
     });
 
-    // ❌ Remove password
+    //  Remove password
     const studentData = student.toObject();
     delete studentData.password;
 

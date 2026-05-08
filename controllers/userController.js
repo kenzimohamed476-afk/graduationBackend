@@ -29,13 +29,21 @@ exports.addUser = async (req, res) => {
     }
     //  hashedPassword
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    if (
+  (req.body.role === "doctor" ||req.body.role === "ta") &&!req.body.specialization) {
+  return res.status(400).json({
+    message:
+      "specialization is required for doctor or ta"
+  });
+}
     //  add on mongo
     const user = await User.create({
   
       name: req.body.name,
       email: req.body.email,
       password: hashedPassword,
-      role: req.body.role
+      role: req.body.role,
+      specialization:req.body.specialization || null
     });
     // delete pass عشان ميتبعتش ف res
     const userData = user.toObject();
@@ -110,5 +118,41 @@ exports.login = async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+exports.getDoctors = async (req, res) => {
+  try {
+
+    const doctors = await User.find({
+      role: "doctor"
+    }).select("name email");
+
+    res.json({
+      doctors
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+exports.getTAs = async (req, res) => {
+  try {
+
+    const tas = await User.find({
+      role: "ta"
+    }).select("name email");
+
+    res.json({
+      tas
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
   }
 };
