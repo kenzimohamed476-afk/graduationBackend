@@ -5,14 +5,8 @@ const ideaSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
-      trim: true
-    },
 
-    year: {
-      type: Number,
-      required: true
     },
-
     description: {
       type: String,
       required: true

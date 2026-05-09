@@ -10,20 +10,26 @@ exports.recommendIdeas = async (req, res) => {
     // validation
     if (!specializations || specializations.length === 0) {
       return res.status(400).json({
-        message: "Specializations required"
+        message: "Specializations required",
       });
     }
 
     // allowed specializations
-    const allowedSpecs = ["AI", "Web", "Mobile", "Cyber Security", "Data Science"];
+    const allowedSpecs = [
+      "AI",
+      "Web",
+      "Mobile",
+      "Cyber Security",
+      "Data Science",
+    ];
 
-    const isValid = specializations.every(spec =>
-      allowedSpecs.includes(spec)
+    const isValid = specializations.every((spec) =>
+      allowedSpecs.includes(spec),
     );
 
     if (!isValid) {
       return res.status(400).json({
-        message: "Invalid specialization"
+        message: "Invalid specialization",
       });
     }
 
@@ -35,23 +41,23 @@ exports.recommendIdeas = async (req, res) => {
             $size: {
               $setIntersection: [
                 { $ifNull: ["$specializations", []] }, // 🔥 fix null
-                specializations
-              ]
-            }
-          }
-        }
+                specializations,
+              ],
+            },
+          },
+        },
       },
       {
         $match: {
-          matchCount: { $gt: 0 }
-        }
+          matchCount: { $gt: 0 },
+        },
       },
       {
-        $sort: { matchCount: -1 }
+        $sort: { matchCount: -1 },
       },
       {
-        $limit: 10
-      }
+        $limit: 10,
+      },
     ]);
 
     // random 5
@@ -62,12 +68,11 @@ exports.recommendIdeas = async (req, res) => {
     res.json({
       message: "Ideas recommended successfully",
       count: recommendedIdeas.length,
-      ideas: recommendedIdeas
+      ideas: recommendedIdeas,
     });
-
   } catch (err) {
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
