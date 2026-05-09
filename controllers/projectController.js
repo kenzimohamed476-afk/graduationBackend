@@ -558,45 +558,60 @@ exports.finalizeProject = async (req, res) => {
 // =====================================================
 // DOCTOR DASHBOARD
 // =====================================================
-exports.getDoctorProjectsWithPlans = async (req, res) => {
+exports.getDoctorDashboard = async (req, res) => {
+
   try {
+
+    // check role
     if (req.user.role !== "doctor") {
+
       return res.status(403).json({
-        message: "Only doctor",
+        message: "Only doctor"
       });
     }
 
+    // all doctor projects
     const projects = await CurrentProject.find({
-      doctor_id: req.user.id,
+      doctor_id: req.user.id
     })
-      .populate("team_id")
-      .populate("ta_id");
 
-    const result = [];
+    .populate({
+      path: "team_id",
+      populate: {
+        path: "members",
+        select: "name"
+      }
+    });
 
-    for (let project of projects) {
-      const plan = await TimePlan.findOne({
-        project_id: project._id,
+    // pending count
+    const pendingProjects = projects.filter(
+      p => p.status === "pending"
+    ).length;
 
-        ta_status: "approved",
-      });
-
-      result.push({
-        project,
-
-        timePlan: plan || null,
-      });
-    }
+    // accepted count
+    const acceptedProjects = projects.filter(
+      p => p.status === "approved" ||
+           p.status === "ongoing"
+    ).length;
 
     res.json({
-      message: "Doctor projects with plans",
 
-      data: result,
+      doctor: req.user,
+
+      pendingProjects,
+
+      acceptedProjects,
+
+      recentIdeas: projects
+
     });
+
   } catch (err) {
+
     res.status(500).json({
-      message: err.message,
+      message: err.message
     });
+
   }
 };
 exports.getStudentDashboard = async (req, res) => {
