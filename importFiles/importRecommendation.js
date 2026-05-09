@@ -11,7 +11,7 @@ mongoose.connect(
 const results = [];
 
 fs.createReadStream("idearecommender.csv")
-  .pipe(csv())
+  .pipe(csv({ separator: ";" }))
 
   .on("data", (data) => {
 
@@ -27,13 +27,30 @@ fs.createReadStream("idearecommender.csv")
       ? data.specialization.split("/")
           .map((item) => item.trim())
       : [];
+if (data.title && data.description) {
 
-    results.push({
-      title: data.title,
-      description: data.description,
-      Tools: data.Tools,
-      specialization: data.specialization
-    });
+  results.push({
+
+    title: data.title.trim(),
+
+    description:
+      data.description.trim(),
+
+    Tools: data.Tools
+      ? data.Tools.split(";")
+          .map(item => item.trim())
+      : [],
+
+    specialization:
+      data.specialization
+        ? data.specialization
+            .split("/")
+            .map(item => item.trim())
+        : []
+
+  });
+
+}
   })
 
   .on("end", async () => {
