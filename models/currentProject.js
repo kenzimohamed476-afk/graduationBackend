@@ -18,18 +18,7 @@ tools: {
 
 specialization: {
     type: [String],
-    enum: [
-      "AI",
-      "Cyber",
-      "Network",
-      "Backend",
-      "Fullstack",
-      "IoT",
-      "Embedded",
-      "Mobile",
-      "Web",
-      "Cloud"
-    ],
+   // enum: [ "AI","Cyber","Network","Backend","Fullstack","IoT","Embedded","Mobile","Web","Cloud"],
     required: true
   },
 
