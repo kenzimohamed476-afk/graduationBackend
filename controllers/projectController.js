@@ -4,6 +4,110 @@ const Team = require("../models/team");
 const Student = require("../models/student");
 const TimePlan = require("../models/timePlan");
 const axios = require("axios");
+//check
+/*exports.checkSimilarity = async (req, res) => {
+  try {
+
+    const { description } = req.body;
+
+    if (!description) {
+      return res.status(400).json({
+        message: "Description is required"
+      });
+    }
+
+    let similarity = 0;
+    let similarProject = null;
+
+    const previousProjects =
+      await PreviousProject.find();
+
+    const currentProjects =
+      await CurrentProject.find();
+
+    const allProjects = [
+      ...previousProjects,
+      ...currentProjects
+    ].filter(p => p.description);
+
+    try {
+
+      const response = await axios.post(
+        "https://ai-project-production-29cf.up.railway.app/check",
+        {
+          problem: description,
+
+          projects: allProjects.map(p => ({
+            id: p._id.toString(),
+            description: p.description
+          }))
+        }
+      );
+
+      const results =
+        response.data.results || [];
+
+      for (let rec of results) {
+
+        const sim =
+          Number(rec.similarity);
+
+        if (sim > similarity) {
+
+          similarity = sim;
+          similarProject = rec;
+
+        }
+      }
+
+    } catch (err) {
+
+      console.log(
+        "AI ERROR:",
+        err.message
+      );
+    }
+
+    let similarProjectDetails = null;
+
+    if (similarProject) {
+
+      similarProjectDetails =
+        await PreviousProject.findById(
+          similarProject.id
+        ) ||
+        await CurrentProject.findById(
+          similarProject.id
+        );
+    }
+
+    res.json({
+
+      allowed: similarity < 80,
+
+      similarity,
+
+      similarProject:
+        similarProjectDetails
+
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};*/
+
+exports.checkSimilarity = async (req, res) => {
+
+  return res.json({
+    message: "Similarity route works"
+  });
+
+};
+
 // =====================
 // ADD PROJECT + CREATE TEAM
 // =====================
