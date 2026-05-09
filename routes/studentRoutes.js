@@ -16,5 +16,6 @@ router.get("/no-project",  auth, studentController.getStudentsWithoutProject);
 
 router.get("/admin-dashboard", auth,  studentController.getAdminDashboard);
 
+router.get("/student/dashboard",auth,projectController.getStudentDashboard);
 
 module.exports = router;
