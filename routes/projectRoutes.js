@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const projectController = require("../controllers/projectController");
+router.post("/check-similarity",auth,projectController.checkSimilarity);
 
 // add project
 router.post("/add", auth, projectController.addProject);

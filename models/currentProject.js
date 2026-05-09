@@ -56,8 +56,8 @@ specialization: {
 
   status: {
     type: String,
-    enum: ["pending", "approved", "ongoing", "finished"],
-    default: "pending"
+    enum: [ "draft","pending","approved","ongoing","finished"],
+    default: "draft"
   },
 
   doctor_status: {
