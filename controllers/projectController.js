@@ -599,3 +599,53 @@ exports.getDoctorProjectsWithPlans = async (req, res) => {
     });
   }
 };
+exports.getStudentDashboard = async (req, res) => {
+
+  try {
+
+    const student = await Student.findById(
+      req.user.id
+    );
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found"
+      });
+    }
+
+    const team = await Team.findById(
+      student.team_id
+    )
+      .populate("members")
+      .populate("leader_id");
+
+    const project = await CurrentProject.findOne({
+      team_id: team._id
+    })
+      .populate("doctor_id")
+      .populate("ta_id");
+
+    res.json({
+
+      message: "Student dashboard data",
+
+      student,
+
+      project,
+
+      supervisor:
+        project.doctor_id,
+
+      teachingAssistant:
+        project.ta_id,
+
+      team
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
