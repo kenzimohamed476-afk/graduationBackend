@@ -11,53 +11,78 @@ mongoose.connect(
 const results = [];
 
 fs.createReadStream("idearecommender.csv")
+
   .pipe(csv({ separator: ";" }))
 
   .on("data", (data) => {
 
-    console.log(data);
+    console.log(
+      Object.keys(data)
+    );
 
-    data.Tools = data.Tools
-      ? data.Tools.split(",").map(
-          (item) => item.trim()
-        )
-      : [];
+    if (
+      data.title &&
+      data.description
+    ) {
 
-    data.specialization = data.specialization
-      ? data.specialization.split("/")
-          .map((item) => item.trim())
-      : [];
-if (data.title && data.description) {
+      results.push({
 
-  results.push({
+        title:
+          data.title.trim(),
 
-    title: data.title.trim(),
+        description:
+          data.description.trim(),
 
-    description:
-      data.description.trim(),
+        Tools:
+          data.Tools
+            ? data.Tools
+                .split(",")
+                .map(item =>
+                  item.trim()
+                )
+            : [],
 
-    Tools: data.Tools
-      ? data.Tools.split(";")
-          .map(item => item.trim())
-      : [],
+        specialization:
+          data.specialization
+            ? data.specialization
+                .split("/")
+                .map(item =>
+                  item.trim()
+                )
+            : []
 
-    specialization:
-      data.specialization
-        ? data.specialization
-            .split("/")
-            .map(item => item.trim())
-        : []
-
-  });
-
-}
+      });
+    }
   })
 
   .on("end", async () => {
 
     try {
 
-      await Idea.insertMany(results);
+      for (const idea of results) {
+
+        await Idea.create(
+          idea
+        );
+      }
+
+      const ideas =
+        await Idea.find();
+
+      console.log(
+        "IDEAS COUNT:",
+        ideas.length
+      );
+
+      console.log(
+        "DB NAME:",
+        mongoose.connection.name
+      );
+
+      console.log(
+        "FIRST IDEA:",
+        ideas[0]
+      );
 
       console.log(
         "Recommendation Data Imported 🔥"

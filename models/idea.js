@@ -4,28 +4,31 @@ const ideaSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
-
+      required: true
     },
+
     description: {
       type: String,
       required: true
     },
 
-    tools: [
+    Tools: [
       {
         type: String
       }
     ],
 
-    specializations: [
+    specialization: [
       {
-        type: String,
-    
+        type: String
       }
     ]
   },
+
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Idea", ideaSchema);
+module.exports = mongoose.model(
+  "Idea",
+  ideaSchema
+);
