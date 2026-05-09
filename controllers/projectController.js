@@ -558,11 +558,14 @@ exports.finalizeProject = async (req, res) => {
 // =====================================================
 // DOCTOR DASHBOARD
 // =====================================================
+
 exports.getDoctorDashboard = async (req, res) => {
 
   try {
 
-    // check role
+    // =====================
+    // CHECK ROLE
+    // =====================
     if (req.user.role !== "doctor") {
 
       return res.status(403).json({
@@ -570,33 +573,61 @@ exports.getDoctorDashboard = async (req, res) => {
       });
     }
 
-    // all doctor projects
+    // =====================
+    // GET DOCTOR DATA
+    // =====================
+    const doctor = await User.findById(req.user.id)
+      .select("-password");
+
+    // =====================
+    // GET DOCTOR PROJECTS
+    // =====================
     const projects = await CurrentProject.find({
       doctor_id: req.user.id
     })
 
     .populate({
       path: "team_id",
+
       populate: {
         path: "members",
-        select: "name"
+
+        select: "name collegeCode specialization"
       }
-    });
+    })
 
-    // pending count
+    .populate("ta_id", "name")
+
+    .sort({ createdAt: -1 });
+
+    // =====================
+    // PENDING COUNT
+    // =====================
     const pendingProjects = projects.filter(
+
       p => p.status === "pending"
+
     ).length;
 
-    // accepted count
+    // =====================
+    // ACCEPTED COUNT
+    // =====================
     const acceptedProjects = projects.filter(
-      p => p.status === "approved" ||
-           p.status === "ongoing"
+
+      p =>
+        p.status === "approved" ||
+        p.status === "ongoing"
+
     ).length;
 
-    res.json({
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
 
-      doctor: req.user,
+      message: "Doctor dashboard data",
+
+      doctor,
 
       pendingProjects,
 
@@ -607,6 +638,8 @@ exports.getDoctorDashboard = async (req, res) => {
     });
 
   } catch (err) {
+
+    console.log(err);
 
     res.status(500).json({
       message: err.message
