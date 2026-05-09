@@ -589,7 +589,6 @@ exports.getDoctorDashboard = async (req, res) => {
   doctor_id: new mongoose.Types.ObjectId(req.user.id)
 
 })
-
     .populate({
       path: "team_id",
 
