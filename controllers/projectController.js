@@ -9,27 +9,6 @@ const axios = require("axios");
 // =====================================================
 // CHECK SIMILARITY + CREATE TEAM
 // =====================================================
-// دي أول خطوة في السيستم
-//
-// هنا:
-// ✅ بيتعمل Team
-// ✅ بيتربط الطلاب بالتيم
-// ✅ بيتحدد Leader
-//
-// بعد كدا:
-// ✅ AI يعمل similarity check
-//
-// لو similarity >= 80
-// ❌ المشروع يترفض
-// لكن:
-// ✅ التيم يفضل موجود
-//
-// لو similarity < 80
-// الطالب يكمل باقي الفلو
-//
-// مهم:
-// ❌ هنا مفيش project بيتحفظ
-// =====================================================
 exports.checkSimilarity = async (req, res) => {
 
   try {
@@ -339,19 +318,6 @@ exports.checkSimilarity = async (req, res) => {
 // =====================================================
 // ADD PROJECT
 // =====================================================
-// دي آخر خطوة في الفلو
-//
-// هنا فقط:
-// ✅ يتحفظ المشروع
-// ✅ يتربط بالتيم
-// ✅ يتبعت للدكتور
-//
-// لأن الطالب بالفعل:
-// ✅ عدى similarity
-// ✅ اختار doctor
-// ✅ اختار TA
-// ✅ عمل review
-// =====================================================
 exports.addProject = async (req, res) => {
 
   try {
@@ -455,8 +421,7 @@ exports.addProject = async (req, res) => {
     // =====================
     // SAVE PROJECT
     // =====================
-    const savedProject =
-      await CurrentProject.create({
+    const savedProject =await CurrentProject.create({
 
         // BASIC DATA
         title,
@@ -509,6 +474,317 @@ exports.addProject = async (req, res) => {
   } catch (err) {
 
     console.log(err);
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+// =====================================================
+// UPDATE STATUS
+// =====================================================
+exports.updateStatus = async (req, res) => {
+
+  if (
+    req.user.role !== "doctor" &&
+    req.user.role !== "ta"
+  ) {
+
+    return res.status(403).json({
+      message:
+        "Only doctor or TA can update status"
+    });
+  }
+
+  try {
+
+    const { status } = req.body;
+
+    let updateField = {};
+
+    if (req.user.role === "doctor") {
+
+      updateField.doctor_status =
+        status;
+    }
+
+    if (req.user.role === "ta") {
+
+      updateField.ta_status =
+        status;
+    }
+
+    const project =
+      await CurrentProject.findByIdAndUpdate(
+
+        req.params.id,
+
+        updateField,
+
+        { new: true }
+      );
+
+    if (!project) {
+
+      return res.status(404).json({
+        message: "Project not found"
+      });
+    }
+
+    if (
+      project.doctor_status === "approved" &&
+      project.ta_status === "approved"
+    ) {
+
+      project.status = "approved";
+
+      await project.save();
+    }
+
+    res.json({
+
+      message: "Status updated",
+
+      project
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+
+
+// =====================================================
+// ADMIN APPROVE PROJECT
+// =====================================================
+exports.adminApproveProject =
+  async (req, res) => {
+
+  if (req.user.role !== "admin") {
+
+    return res.status(403).json({
+      message:
+        "Only admin can approve project"
+    });
+  }
+
+  try {
+
+    const { project_code } = req.body;
+
+    const project =
+      await CurrentProject.findById(
+        req.params.id
+      );
+
+    if (!project) {
+
+      return res.status(404).json({
+        message: "Project not found"
+      });
+    }
+
+    project.project_code =
+      project_code;
+
+    project.status = "ongoing";
+
+    await project.save();
+
+    res.json({
+
+      message:
+        "Project is now ongoing",
+
+      project
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+
+
+// =====================================================
+// UPLOAD DOCUMENTATION
+// =====================================================
+exports.uploadDocumentation =
+  async (req, res) => {
+
+  try {
+
+    const { documentation } =
+      req.body;
+
+    const project =
+      await CurrentProject.findByIdAndUpdate(
+
+        req.params.id,
+
+        { documentation },
+
+        { new: true }
+      );
+
+    if (!project) {
+
+      return res.status(404).json({
+        message: "Project not found"
+      });
+    }
+
+    res.json({
+
+      message:
+        "Documentation uploaded",
+
+      project
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+
+
+// =====================================================
+// FINALIZE PROJECT
+// =====================================================
+exports.finalizeProject =
+  async (req, res) => {
+
+  try {
+
+    const project =
+      await CurrentProject.findById(
+        req.params.id
+      );
+
+    if (!project) {
+
+      return res.status(404).json({
+        message: "Project not found"
+      });
+    }
+
+    const newPrevious =
+      await PreviousProject.create({
+
+        project_code:
+          project.project_code,
+
+        title:
+          project.title,
+
+        description:
+          project.description,
+
+        Specialization:
+          Array.isArray(
+            project.specialization
+          )
+            ? project.specialization.join(",")
+            : project.specialization,
+
+        Tools:
+          Array.isArray(project.tools)
+            ? project.tools.join(",")
+            : project.tools,
+
+        Year:
+          project.year,
+
+        status: "finished"
+
+      });
+
+    await CurrentProject.findByIdAndDelete(
+      project._id
+    );
+
+    res.json({
+
+      message:
+        "Moved to previous projects",
+
+      newPrevious
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+
+
+// =====================================================
+// DOCTOR DASHBOARD
+// =====================================================
+exports.getDoctorProjectsWithPlans =
+  async (req, res) => {
+
+  try {
+
+    if (req.user.role !== "doctor") {
+
+      return res.status(403).json({
+        message: "Only doctor"
+      });
+    }
+
+    const projects =
+      await CurrentProject.find({
+
+        doctor_id:
+          req.user.id
+
+      })
+        .populate("team_id")
+        .populate("ta_id");
+
+    const result = [];
+
+    for (let project of projects) {
+
+      const plan =
+        await TimePlan.findOne({
+
+          project_id:
+            project._id,
+
+          ta_status:
+            "approved"
+        });
+
+      result.push({
+
+        project,
+
+        timePlan:
+          plan || null
+      });
+    }
+
+    res.json({
+
+      message:
+        "Doctor projects with plans",
+
+      data: result
+    });
+
+  } catch (err) {
 
     res.status(500).json({
       message: err.message
