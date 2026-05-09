@@ -152,23 +152,28 @@ exports.getStudentDashboard = async (req, res) => {
 
     if (!student) {
       return res.status(404).json({
-        message: "Student not found",
+        message: "Student not found"
       });
     }
 
     // =====================
-    // CHECK TEAM
+    // NO TEAM
     // =====================
     if (!student.team_id) {
 
-      return res.json({
-        message: "Student has no team yet",
+      return res.status(200).json({
+
+        message: "No team yet",
 
         student,
 
         team: null,
 
-        project: null
+        project: null,
+
+        supervisor: null,
+
+        teachingAssistant: null
       });
     }
 
@@ -180,39 +185,57 @@ exports.getStudentDashboard = async (req, res) => {
       .populate("leader_id");
 
     // =====================
-    // CHECK PROJECT
+    // NO TEAM FOUND
     // =====================
-    let project = null;
+    if (!team) {
 
-    if (team) {
+      return res.status(200).json({
 
-      project = await CurrentProject.findOne({
-        team_id: team._id,
-      })
-        .populate("doctor_id")
-        .populate("ta_id");
+        message: "Team not found",
+
+        student,
+
+        team: null,
+
+        project: null,
+
+        supervisor: null,
+
+        teachingAssistant: null
+      });
     }
 
-    res.json({
+    // =====================
+    // GET PROJECT
+    // =====================
+    const project = await CurrentProject.findOne({
+      team_id: team._id
+    })
+      .populate("doctor_id")
+      .populate("ta_id");
+
+    res.status(200).json({
+
       message: "Student dashboard data",
 
       student,
 
+      team,
+
       project,
 
-      supervisor: project ? project.doctor_id : null,
+      supervisor: project?.doctor_id || null,
 
-      teachingAssistant: project ? project.ta_id : null,
-
-      team,
+      teachingAssistant: project?.ta_id || null
     });
 
   } catch (err) {
 
-    res.status(500).json({
-      message: err.message,
-    });
+    console.log(err);
 
+    res.status(500).json({
+      message: err.message
+    });
   }
 };
 exports.getProfile = async (req, res) => {
