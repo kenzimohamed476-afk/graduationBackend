@@ -7,8 +7,7 @@ const studentSchema = Joi.object({
   password: Joi.string().min(6).required(),
 
   phone: Joi.string().pattern(/^[0-9]{11}$/).required(),
-
-  collegeCode: Joi.number().integer().min(100000000).max(999999999).required(),
+collegeCode: Joi.number().integer().min(10000000).max(99999999).required(),
 
   // not required
   specialization: Joi.string().valid(
