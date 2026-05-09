@@ -5,7 +5,7 @@ const Student = require("../models/student");
 const TimePlan = require("../models/timePlan");
 const axios = require("axios");
 //check
-/*exports.checkSimilarity = async (req, res) => {
+exports.checkSimilarity = async (req, res) => {
   try {
 
     const { description } = req.body;
@@ -98,15 +98,8 @@ const axios = require("axios");
       message: err.message
     });
   }
-};*/
-
-exports.checkSimilarity = async (req, res) => {
-
-  return res.json({
-    message: "Similarity route works"
-  });
-
 };
+
 
 // =====================
 // ADD PROJECT + CREATE TEAM
