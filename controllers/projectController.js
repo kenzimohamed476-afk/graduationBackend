@@ -3,6 +3,7 @@ const PreviousProject = require("../models/previousProject");
 const Team = require("../models/team");
 const Student = require("../models/student");
 const TimePlan = require("../models/timePlan");
+const User = require("../models/user");
 const axios = require("axios");
 // CHECK SIMILARITY + CREATE TEAMF
 exports.checkSimilarity = async (req, res) => {
