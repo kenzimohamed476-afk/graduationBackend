@@ -144,20 +144,75 @@ exports.getStudentsWithoutProject = async (req, res) => {
 // =====================
 // ADMIN DASHBOARD
 // =====================
-exports.getAdminDashboard = async (req, res) => {
-  try {
-    const studentsWithoutTeam = await Student.find({ team_id: null });
+exports.getStudentDashboard = async (req, res) => {
 
-    const teamsWithoutProject = await Team.find({ project_code: null })
-      .populate("leader_id")
-      .populate("members");
+  try {
+
+    const student = await Student.findById(req.user.id);
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found",
+      });
+    }
+
+    // =====================
+    // CHECK TEAM
+    // =====================
+    if (!student.team_id) {
+
+      return res.json({
+        message: "Student has no team yet",
+
+        student,
+
+        team: null,
+
+        project: null
+      });
+    }
+
+    // =====================
+    // GET TEAM
+    // =====================
+    const team = await Team.findById(student.team_id)
+      .populate("members")
+      .populate("leader_id");
+
+    // =====================
+    // CHECK PROJECT
+    // =====================
+    let project = null;
+
+    if (team) {
+
+      project = await CurrentProject.findOne({
+        team_id: team._id,
+      })
+        .populate("doctor_id")
+        .populate("ta_id");
+    }
 
     res.json({
-      studentsWithoutTeam,
-      teamsWithoutProject,
+      message: "Student dashboard data",
+
+      student,
+
+      project,
+
+      supervisor: project ? project.doctor_id : null,
+
+      teachingAssistant: project ? project.ta_id : null,
+
+      team,
     });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+
+    res.status(500).json({
+      message: err.message,
+    });
+
   }
 };
 exports.getProfile = async (req, res) => {
