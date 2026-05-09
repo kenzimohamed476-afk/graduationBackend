@@ -21,6 +21,6 @@ router.put("/documentation/:id", auth, projectController.uploadDocumentation);
 router.put("/finalize/:id", auth, projectController.finalizeProject);
 
 // doctor dashboard with plans
-router.get("/doctor-with-plans", auth, projectController.getDoctorProjectsWithPlans);
+//router.get("/doctor-with-plans", auth, projectController.getDoctorProjectsWithPlans);
 
 module.exports = router;
