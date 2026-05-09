@@ -179,7 +179,7 @@ exports.checkSimilarity = async (req, res) => {
           team_id: newTeam._id,
 
           specialization:
-            member.specialization
+          member.specialization
         }
       );
     }
