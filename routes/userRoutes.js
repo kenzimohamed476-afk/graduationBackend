@@ -21,6 +21,6 @@ router.get("/doctors", userController.getDoctors);
 router.get("/tas", userController.getTAs);
 
 // doctor dashboard
-router.get("/dashboard",auth,projectController.getDoctorDashboard);
+router.get("/doctor/dashboard",auth,projectController.getDoctorDashboard);
 
 module.exports = router;
