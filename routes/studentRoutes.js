@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const studentController = require("../controllers/studentController");
-
+const projectController = require("../controllers/projectController");
 //register 
 router.post("/add", studentController.addStudent);
 // login
