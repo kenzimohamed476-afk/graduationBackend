@@ -14,10 +14,11 @@ router.get("/no-team",  auth, studentController.getStudentsWithoutTeam);
 // students without project
 router.get("/no-project",  auth, studentController.getStudentsWithoutProject);
 
-router.get("/admin-dashboard", auth,  studentController.getAdminDashboard);
+//router.get("/admin-dashboard", auth,  studentController.getAdminDashboard);
 
 router.get("/dashboard",auth,projectController.getStudentDashboard);
 router.get("/profile",auth,studentController.getProfile);
 router.put("/profile",auth,studentController.updateProfile);
+
 
 module.exports = router;
