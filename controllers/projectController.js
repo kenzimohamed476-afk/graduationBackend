@@ -5,6 +5,7 @@ const Student = require("../models/student");
 const TimePlan = require("../models/timePlan");
 const User = require("../models/user");
 const axios = require("axios");
+const mongoose = require("mongoose");
 // CHECK SIMILARITY + CREATE TEAMF
 exports.checkSimilarity = async (req, res) => {
   try {
@@ -583,9 +584,11 @@ exports.getDoctorDashboard = async (req, res) => {
     // =====================
     // GET DOCTOR PROJECTS
     // =====================
-    const projects = await CurrentProject.find({
-      doctor_id: req.user.id
-    })
+  const projects = await CurrentProject.find({
+
+  doctor_id: new mongoose.Types.ObjectId(req.user.id)
+
+})
 
     .populate({
       path: "team_id",
