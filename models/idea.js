@@ -12,7 +12,8 @@ const ideaSchema = new mongoose.Schema(
       required: true
     },
 
-    Tools: [
+    // خليها small letters
+    tools: [
       {
         type: String
       }

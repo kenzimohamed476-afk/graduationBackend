@@ -5,66 +5,80 @@ const csv = require("csv-parser");
 const Idea = require("../models/idea");
 
 mongoose.connect(
-  "mongodb+srv://kenzimohamed476_db_user:8MB7kGdwRRvOHrgW@cluster0.xqkrcxg.mongodb.net/graduation_project?retryWrites=true&w=majority&appName=Cluster0",
+  "mongodb+srv://kenzimohamed476_db_user:8MB7kGdwRRvOHrgW@cluster0.xqkrcxg.mongodb.net/graduation_project?retryWrites=true&w=majority&appName=Cluster0"
 );
 
 const results = [];
 
-fs.createReadStream("idearecommender.csv")
+fs.createReadStream("./idearecommender.csv")
 
-  .pipe(csv({ separator: ";" }))
+  .pipe(csv({
+    separator: ";",
+    headers: [
+      "title",
+      "description",
+      "Tools",
+      "specialization"
+    ],
+    skipLines: 1
+  }))
 
   .on("data", (data) => {
 
-    console.log(
-      Object.keys(data)
-    );
+    const title =
+      data.title?.trim();
 
-    if (
-      data.title &&
-      data.description
-    ) {
+    const description =
+      data.description?.trim();
 
-      results.push({
-
-        title:
-          data.title.trim(),
-
-        description:
-          data.description.trim(),
-
-        Tools:
-          data.Tools
-            ? data.Tools
-                .split(",")
-                .map(item =>
-                  item.trim()
-                )
-            : [],
-
-        specialization:
-          data.specialization
-            ? data.specialization
-                .split("/")
-                .map(item =>
-                  item.trim()
-                )
-            : []
-
-      });
+    if (!title || !description) {
+      return;
     }
+
+    const tools =
+      data.Tools
+        ? data.Tools
+            .split(";")
+            .map(item =>
+              item.trim()
+            )
+        : [];
+
+    const specialization =
+      data.specialization
+        ? data.specialization
+            .split("/")
+            .map(item =>
+              item.trim()
+            )
+        : [];
+
+    results.push({
+
+      title,
+
+      description,
+
+      tools,
+
+      specialization
+
+    });
+
   })
 
   .on("end", async () => {
 
     try {
 
-      for (const idea of results) {
+      console.log(
+        "RESULTS COUNT:",
+        results.length
+      );
 
-        await Idea.create(
-          idea
-        );
-      }
+      await Idea.deleteMany();
+
+      await Idea.insertMany(results);
 
       const ideas =
         await Idea.find();
@@ -72,11 +86,6 @@ fs.createReadStream("idearecommender.csv")
       console.log(
         "IDEAS COUNT:",
         ideas.length
-      );
-
-      console.log(
-        "DB NAME:",
-        mongoose.connection.name
       );
 
       console.log(
@@ -93,5 +102,7 @@ fs.createReadStream("idearecommender.csv")
     } catch (err) {
 
       console.log(err);
+
     }
+
   });
