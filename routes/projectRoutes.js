@@ -19,6 +19,9 @@ router.put("/documentation/:id", auth, projectController.uploadDocumentation);
 
 // finalize project
 router.put("/finalize/:id", auth, projectController.finalizeProject);
+router.get( "/:id",auth,projectController.getProjectDetails);
+router.put("/:id/accept",auth,projectController.acceptProject);
+router.put("/:id/reject",auth,projectController.rejectProject);
 
 // doctor dashboard with plans
 //router.get("/doctor-with-plans", auth, projectController.getDoctorProjectsWithPlans);

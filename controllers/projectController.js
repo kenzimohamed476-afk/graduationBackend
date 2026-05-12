@@ -650,6 +650,178 @@ exports.getDoctorDashboard = async (req, res) => {
 
   }
 };
+// =====================================================
+// GET PROJECT DETAILS
+// =====================================================
+
+exports.getProjectDetails = async (req, res) => {
+
+  try {
+
+    const project = await CurrentProject.findById(
+      req.params.id
+    )
+
+    .populate({
+
+      path: "team_id",
+
+      populate: {
+
+        path: "members",
+
+        select:
+          "name collegeCode specialization"
+
+      }
+
+    })
+
+    .populate(
+      "doctor_id",
+      "name"
+    )
+
+    .populate(
+      "ta_id",
+      "name"
+    );
+
+    if (!project) {
+
+      return res.status(404).json({
+
+        message:
+          "Project not found"
+
+      });
+    }
+
+    res.status(200).json({
+
+      message:
+        "Project details",
+
+      project
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+
+      message: err.message
+
+    });
+  }
+};
+// =====================================================
+// ACCEPT PROJECT
+// =====================================================
+
+exports.acceptProject = async (req, res) => {
+
+  try {
+
+    const project =
+      await CurrentProject.findByIdAndUpdate(
+
+        req.params.id,
+
+        {
+          doctor_status: "approved",
+          status: "approved"
+        },
+
+        { new: true }
+
+      );
+
+    if (!project) {
+
+      return res.status(404).json({
+
+        message:
+          "Project not found"
+
+      });
+    }
+
+    res.status(200).json({
+
+      message:
+        "Project accepted",
+
+      project
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+
+      message: err.message
+
+    });
+  }
+};
+
+// =====================================================
+// REJECT PROJECT
+// =====================================================
+
+exports.rejectProject = async (req, res) => {
+
+  try {
+
+    const project =
+      await CurrentProject.findByIdAndUpdate(
+
+        req.params.id,
+
+        {
+          doctor_status: "rejected",
+          status: "rejected"
+        },
+
+        { new: true }
+
+      );
+
+    if (!project) {
+
+      return res.status(404).json({
+
+        message:
+          "Project not found"
+
+      });
+    }
+
+    res.status(200).json({
+
+      message:
+        "Project rejected",
+
+      project
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+
+      message: err.message
+
+    });
+  }
+};
 exports.getStudentDashboard = async (req, res) => {
 
   try {
