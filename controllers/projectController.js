@@ -562,72 +562,59 @@ exports.finalizeProject = async (req, res) => {
 // =====================================================
 
 exports.getDoctorDashboard = async (req, res) => {
-
   try {
-
     // =====================
     // CHECK ROLE
     // =====================
     if (req.user.role !== "doctor") {
-
       return res.status(403).json({
-        message: "Only doctor"
+        message: "Only doctor",
       });
     }
 
     // =====================
     // GET DOCTOR DATA
     // =====================
-    const doctor = await User.findById(req.user.id)
-      .select("-password");
+    const doctor = await User.findById(req.user.id).select("-password");
 
     // =====================
     // GET DOCTOR PROJECTS
     // =====================
-  const projects = await CurrentProject.find({
-
-  doctor_id: new mongoose.Types.ObjectId(req.user.id)
-
-})
-    .populate({
-      path: "team_id",
-
-      populate: {
-        path: "members",
-
-        select: "name collegeCode specialization"
-      }
+    const projects = await CurrentProject.find({
+      doctor_id: new mongoose.Types.ObjectId(req.user.id),
     })
+      .populate({
+        path: "team_id",
 
-    .populate("ta_id", "name")
+        populate: {
+          path: "members",
 
-    .sort({ createdAt: -1 });
+          select: "name collegeCode specialization",
+        },
+      })
+
+      .populate("ta_id", "name")
+
+      .sort({ createdAt: -1 });
 
     // =====================
     // PENDING COUNT
     // =====================
     const pendingProjects = projects.filter(
-
-      p => p.status === "pending"
-
+      (p) => p.status === "pending",
     ).length;
 
     // =====================
     // ACCEPTED COUNT
     // =====================
     const acceptedProjects = projects.filter(
-
-      p =>
-        p.status === "approved" ||
-        p.status === "ongoing"
-
+      (p) => p.status === "approved" || p.status === "ongoing",
     ).length;
 
     // =====================
     // RESPONSE
     // =====================
     res.status(200).json({
-
       message: "Doctor dashboard data",
 
       doctor,
@@ -636,18 +623,14 @@ exports.getDoctorDashboard = async (req, res) => {
 
       acceptedProjects,
 
-      recentIdeas: projects
-
+      recentIdeas: projects,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
-
   }
 };
 // =====================================================
@@ -655,65 +638,59 @@ exports.getDoctorDashboard = async (req, res) => {
 // =====================================================
 
 exports.getProjectDetails = async (req, res) => {
-
   try {
+    const project = await CurrentProject.findById(req.params.id)
 
-    const project = await CurrentProject.findById(
-      req.params.id
-    )
+      .populate({
+        path: "team_id",
 
-    .populate({
+        populate: {
+          path: "members",
 
-      path: "team_id",
+          select: "name collegeCode specialization",
+        },
+      })
 
-      populate: {
+      .populate("doctor_id", "name")
 
-        path: "members",
-
-        select:
-          "name collegeCode specialization"
-
-      }
-
-    })
-
-    .populate(
-      "doctor_id",
-      "name"
-    )
-
-    .populate(
-      "ta_id",
-      "name"
-    );
+      .populate("ta_id", "name");
 
     if (!project) {
-
       return res.status(404).json({
-
-        message:
-          "Project not found"
-
+        message: "Project not found",
       });
     }
 
     res.status(200).json({
+      message: "Project details",
 
-      message:
-        "Project details",
+      project: {
+        _id: project._id,
 
-      project
+        title: project.title,
 
+        description: project.description,
+
+        tools: project.tools,
+
+        specialization: project.specialization,
+
+        status: project.status,
+
+        similarity_score: project.similarity_score,
+
+        team: project.team_id,
+
+        //doctor: project.doctor_id,
+
+        ta: project.ta_id,
+      },
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-
-      message: err.message
-
+      message: err.message,
     });
   }
 };
@@ -722,50 +699,34 @@ exports.getProjectDetails = async (req, res) => {
 // =====================================================
 
 exports.acceptProject = async (req, res) => {
-
   try {
+    const project = await CurrentProject.findByIdAndUpdate(
+      req.params.id,
 
-    const project =
-      await CurrentProject.findByIdAndUpdate(
+      {
+        doctor_status: "approved",
+        status: "approved",
+      },
 
-        req.params.id,
-
-        {
-          doctor_status: "approved",
-          status: "approved"
-        },
-
-        { new: true }
-
-      );
+      { new: true },
+    );
 
     if (!project) {
-
       return res.status(404).json({
-
-        message:
-          "Project not found"
-
+        message: "Project not found",
       });
     }
 
     res.status(200).json({
+      message: "Project accepted",
 
-      message:
-        "Project accepted",
-
-      project
-
+      project,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-
-      message: err.message
-
+      message: err.message,
     });
   }
 };
@@ -775,62 +736,44 @@ exports.acceptProject = async (req, res) => {
 // =====================================================
 
 exports.rejectProject = async (req, res) => {
-
   try {
+    const project = await CurrentProject.findByIdAndUpdate(
+      req.params.id,
 
-    const project =
-      await CurrentProject.findByIdAndUpdate(
+      {
+        doctor_status: "rejected",
+        status: "rejected",
+      },
 
-        req.params.id,
-
-        {
-          doctor_status: "rejected",
-          status: "rejected"
-        },
-
-        { new: true }
-
-      );
+      { new: true },
+    );
 
     if (!project) {
-
       return res.status(404).json({
-
-        message:
-          "Project not found"
-
+        message: "Project not found",
       });
     }
 
     res.status(200).json({
+      message: "Project rejected",
 
-      message:
-        "Project rejected",
-
-      project
-
+      project,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-
-      message: err.message
-
+      message: err.message,
     });
   }
 };
 exports.getStudentDashboard = async (req, res) => {
-
   try {
-
     const student = await Student.findById(req.user.id);
 
     if (!student) {
       return res.status(404).json({
-        message: "Student not found"
+        message: "Student not found",
       });
     }
 
@@ -838,9 +781,7 @@ exports.getStudentDashboard = async (req, res) => {
     // NO TEAM
     // =====================
     if (!student.team_id) {
-
       return res.status(200).json({
-
         message: "No team yet",
 
         student,
@@ -851,7 +792,7 @@ exports.getStudentDashboard = async (req, res) => {
 
         supervisor: null,
 
-        teachingAssistant: null
+        teachingAssistant: null,
       });
     }
 
@@ -866,9 +807,7 @@ exports.getStudentDashboard = async (req, res) => {
     // NO TEAM FOUND
     // =====================
     if (!team) {
-
       return res.status(200).json({
-
         message: "Team not found",
 
         student,
@@ -879,7 +818,7 @@ exports.getStudentDashboard = async (req, res) => {
 
         supervisor: null,
 
-        teachingAssistant: null
+        teachingAssistant: null,
       });
     }
 
@@ -887,13 +826,12 @@ exports.getStudentDashboard = async (req, res) => {
     // GET PROJECT
     // =====================
     const project = await CurrentProject.findOne({
-      team_id: team._id
+      team_id: team._id,
     })
       .populate("doctor_id")
       .populate("ta_id");
 
     res.status(200).json({
-
       message: "Student dashboard data",
 
       student,
@@ -904,15 +842,13 @@ exports.getStudentDashboard = async (req, res) => {
 
       supervisor: project?.doctor_id || null,
 
-      teachingAssistant: project?.ta_id || null
+      teachingAssistant: project?.ta_id || null,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
