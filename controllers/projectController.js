@@ -397,9 +397,6 @@ exports.addProject = async (req, res) => {
 // =====================================================
 // UPDATE STATUS
 // =====================================================
-// =====================================================
-// UPDATE STATUS
-// =====================================================
 exports.updateStatus = async (req, res) => {
   // =====================
   // CHECK ROLE
@@ -966,6 +963,132 @@ exports.getTADashboard = async (req, res) => {
       acceptedProjects,
 
       recentIdeas: projects,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+// =====================================================
+// CHANGE TA
+// =====================================================
+exports.changeTA = async (req, res) => {
+  try {
+    // =====================
+    // CHECK LOGIN USER
+    // =====================
+    const student = await Student.findById(req.user.id);
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found",
+      });
+    }
+
+    // =====================
+    // GET PROJECT
+    // =====================
+    const project = await CurrentProject.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    // =====================
+    // GET TEAM
+    // =====================
+    const team = await Team.findById(project.team_id);
+
+    if (!team) {
+      return res.status(404).json({
+        message: "Team not found",
+      });
+    }
+
+    // =====================
+    // ONLY LEADER CAN CHANGE TA
+    // =====================
+    if (team.leader_id.toString() !== student._id.toString()) {
+      return res.status(403).json({
+        message: "Only leader can change TA",
+      });
+    }
+
+    // =====================
+    // DOCTOR MUST APPROVE FIRST
+    // =====================
+    if (project.doctor_status !== "approved") {
+      return res.status(400).json({
+        message: "Doctor must approve first",
+      });
+    }
+
+    // =====================
+    // ONLY IF TA REJECTED
+    // =====================
+    if (project.ta_status !== "rejected") {
+      return res.status(400).json({
+        message: "TA did not reject this project",
+      });
+    }
+
+    // =====================
+    // GET NEW TA
+    // =====================
+    const { ta_id } = req.body;
+
+    if (!ta_id) {
+      return res.status(400).json({
+        message: "TA id is required",
+      });
+    }
+
+    // =====================
+    // PREVENT SAME TA
+    // =====================
+    if (project.ta_id.toString() === ta_id) {
+      return res.status(400).json({
+        message: "Choose a different TA",
+      });
+    }
+
+    // =====================
+    // CHECK TA EXISTS
+    // =====================
+    const ta = await User.findById(ta_id);
+
+    if (!ta || ta.role !== "ta") {
+      return res.status(400).json({
+        message: "Invalid TA",
+      });
+    }
+
+    // =====================
+    // UPDATE TA
+    // =====================
+    project.ta_id = ta_id;
+
+    project.ta_status = "pending";
+
+    project.status = "pending";
+
+    // =====================
+    // SAVE
+    // =====================
+    await project.save();
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.json({
+      message: "TA changed successfully",
+
+      project,
     });
   } catch (err) {
     console.log(err);
