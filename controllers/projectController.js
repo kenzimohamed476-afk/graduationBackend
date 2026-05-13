@@ -249,6 +249,9 @@ exports.checkSimilarity = async (req, res) => {
 // =====================================================
 // ADD PROJECT
 // =====================================================
+// =====================================================
+// ADD PROJECT
+// =====================================================
 exports.addProject = async (req, res) => {
   try {
     // =====================
@@ -295,6 +298,15 @@ exports.addProject = async (req, res) => {
     ) {
       return res.status(400).json({
         message: "Invalid similarity score",
+      });
+    }
+
+    // =====================
+    // REJECT HIGH SIMILARITY
+    // =====================
+    if (similarity_score >= 80) {
+      return res.status(400).json({
+        message: "Project rejected بسبب similarity عالية",
       });
     }
 
