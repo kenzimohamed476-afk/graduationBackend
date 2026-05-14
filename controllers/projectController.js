@@ -410,6 +410,7 @@ exports.addProject = async (req, res) => {
 // UPDATE STATUS
 // =====================================================
 exports.updateStatus = async (req, res) => {
+
   // =====================
   // CHECK ROLE
   // =====================
@@ -420,6 +421,7 @@ exports.updateStatus = async (req, res) => {
   }
 
   try {
+
     // =====================
     // GET STATUS
     // =====================
@@ -463,9 +465,36 @@ exports.updateStatus = async (req, res) => {
     // =====================
     // TA MUST WAIT FOR DOCTOR
     // =====================
-    if (req.user.role === "ta" && project.doctor_status !== "approved") {
+    if (
+      req.user.role === "ta" &&
+      project.doctor_status !== "approved"
+    ) {
       return res.status(403).json({
         message: "Doctor must approve first",
+      });
+    }
+
+    // =====================
+    // DOCTOR ALREADY DECIDED
+    // =====================
+    if (
+      req.user.role === "doctor" &&
+      project.doctor_status !== "pending"
+    ) {
+      return res.status(400).json({
+        message: "Doctor already updated status",
+      });
+    }
+
+    // =====================
+    // TA ALREADY DECIDED
+    // =====================
+    if (
+      req.user.role === "ta" &&
+      project.ta_status !== "pending"
+    ) {
+      return res.status(400).json({
+        message: "TA already updated status",
       });
     }
 
@@ -481,11 +510,10 @@ exports.updateStatus = async (req, res) => {
     }
 
     // =====================
-    // IF ANYONE REJECTS
+    // DOCTOR REJECTS
     // =====================
-    if (project.doctor_status === "rejected") 
-      {
-          project.status = "rejected";
+    if (project.doctor_status === "rejected") {
+      project.status = "rejected";
     }
 
     // =====================
@@ -506,12 +534,14 @@ exports.updateStatus = async (req, res) => {
     // =====================
     // RESPONSE
     // =====================
-    res.json({
-      message: "Status updated",
+    res.status(200).json({
+      message: "Status updated successfully",
 
       project,
     });
+
   } catch (err) {
+
     console.log(err);
 
     res.status(500).json({
