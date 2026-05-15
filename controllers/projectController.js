@@ -89,38 +89,27 @@ exports.checkSimilarity = async (req, res) => {
     );
 
     // =====================
-    // CHECK ACTIVE TEAM ONLY
-    // rejected projects allowed
+    // CHECK ACTIVE PROJECT ONLY
     // =====================
-    const existingMembers = await Student.find({
+    const existingProject =
+      await CurrentProject.findOne({
 
-      _id: { $in: memberIds },
+        team_id: student.team_id,
 
-      team_id: { $ne: null },
-    });
+        status: {
+          $in: [
+            "pending",
+            "approved",
+            "ongoing"
+          ]
+        }
+      });
 
-    for (let member of existingMembers) {
-
-      const activeProject =
-        await CurrentProject.findOne({
-
-          team_id: member.team_id,
-
-          status: {
-            $in: [
-              "pending",
-              "approved",
-              "ongoing"
-            ]
-          }
-        });
-
-      if (activeProject) {
-        return res.status(400).json({
-          message:
-            "One or more students already in a team",
-        });
-      }
+    if (existingProject) {
+      return res.status(400).json({
+        message:
+          "Team already has an active project",
+      });
     }
 
     // =====================
@@ -146,55 +135,67 @@ exports.checkSimilarity = async (req, res) => {
     }
 
     // =====================
-    // CREATE TEAM
+    // CREATE TEAM IF NOT EXISTS
     // =====================
-    const newTeam = await Team.create({
+    let currentTeam;
 
-      leader_id:
-        idMap[team.leader_collegeCode],
+    if (student.team_id) {
 
-      members: memberIds,
-    });
+      currentTeam = await Team.findById(
+        student.team_id
+      );
 
-    // =====================
-    // UPDATE STUDENTS
-    // =====================
-    for (let member of team.members) {
+    } else {
 
-      if (!member.specialization) {
-        return res.status(400).json({
-          message:
-            "Each member must have specialization",
-        });
+      currentTeam = await Team.create({
+
+        leader_id:
+          idMap[team.leader_collegeCode],
+
+        members: memberIds,
+      });
+
+      // =====================
+      // UPDATE STUDENTS
+      // =====================
+      for (let member of team.members) {
+
+        if (!member.specialization) {
+          return res.status(400).json({
+            message:
+              "Each member must have specialization",
+          });
+        }
+
+        await Student.findOneAndUpdate(
+          {
+            collegeCode:
+              Number(member.collegeCode),
+          },
+
+          {
+            team_id: currentTeam._id,
+
+            specialization:
+              member.specialization,
+          }
+        );
       }
 
+      // =====================
+      // SET LEADER
+      // =====================
       await Student.findOneAndUpdate(
         {
-          collegeCode: Number(member.collegeCode),
+          collegeCode:
+            Number(team.leader_collegeCode),
         },
 
         {
-          team_id: newTeam._id,
-
-          specialization:
-            member.specialization,
+          isLeader: true,
         }
       );
     }
-
-    // =====================
-    // SET LEADER
-    // =====================
-    await Student.findOneAndUpdate(
-      {
-        collegeCode:
-          Number(team.leader_collegeCode),
-      },
-
-      {
-        isLeader: true,
-      }
-    );
 
     // =====================
     // DEFAULT VALUES
@@ -291,7 +292,7 @@ exports.checkSimilarity = async (req, res) => {
 
       similarity,
 
-      team_id: newTeam._id,
+      team_id: currentTeam._id,
 
       similarProject:
         similarProjectDetails,
