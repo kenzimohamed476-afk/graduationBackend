@@ -509,7 +509,15 @@ exports.updateStatus = async (req, res) => {
     // DOCTOR REJECTS
     // =====================
     if (project.doctor_status === "rejected") {
+
+      // FINAL STATUS
       project.status = "rejected";
+
+      // REMOVE TA STATUS
+      project.ta_status = null;
+
+      // REMOVE TA
+      project.ta_id = null;
     }
 
     // =====================
