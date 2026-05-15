@@ -246,8 +246,11 @@ exports.checkSimilarity = async (req, res) => {
   }
 };
 // ADD PROJECT
+// ADD PROJECT
 exports.addProject = async (req, res) => {
+
   try {
+
     // =====================
     // CHECK LOGIN USER
     // =====================
@@ -334,15 +337,25 @@ exports.addProject = async (req, res) => {
     }
 
     // =====================
-    // CHECK IF TEAM ALREADY HAS PROJECT
+    // CHECK ACTIVE PROJECT ONLY
+    // rejected projects allowed
     // =====================
     const existingProject = await CurrentProject.findOne({
+
       team_id: team._id,
+
+      status: {
+        $in: [
+          "pending",
+          "approved",
+          "ongoing"
+        ]
+      }
     });
 
     if (existingProject) {
       return res.status(400).json({
-        message: "Team already has a project",
+        message: "Team already has an active project",
       });
     }
 
@@ -350,6 +363,7 @@ exports.addProject = async (req, res) => {
     // SAVE PROJECT
     // =====================
     const savedProject = await CurrentProject.create({
+
       // BASIC DATA
       title,
       description,
@@ -392,7 +406,9 @@ exports.addProject = async (req, res) => {
 
       savedProject,
     });
+
   } catch (err) {
+
     console.log(err);
 
     res.status(500).json({
