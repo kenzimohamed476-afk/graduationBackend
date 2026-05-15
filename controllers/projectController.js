@@ -89,27 +89,34 @@ exports.checkSimilarity = async (req, res) => {
     );
 
     // =====================
-    // CHECK ACTIVE PROJECT ONLY
+    // GET TEAM
     // =====================
-    const existingProject =
-      await CurrentProject.findOne({
+    const currentTeam =
+      student.team_id
+        ? await Team.findById(student.team_id)
+        : null;
 
-        team_id: student.team_id,
+    // =====================
+    // CHECK ACTIVE PROJECT
+    // =====================
+    if (currentTeam) {
 
-        status: {
-          $in: [
-            "pending",
-            "approved",
-            "ongoing"
-          ]
-        }
-      });
+      const existingProject =
+        await CurrentProject.findOne({
 
-    if (existingProject) {
-      return res.status(400).json({
-        message:
-          "Team already has an active project",
-      });
+          team_id: currentTeam._id,
+
+          status: {
+            $ne: "rejected"
+          }
+        });
+
+      if (existingProject) {
+        return res.status(400).json({
+          message:
+            "Team already has an active project",
+        });
+      }
     }
 
     // =====================
@@ -137,17 +144,11 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // CREATE TEAM IF NOT EXISTS
     // =====================
-    let currentTeam;
+    let finalTeam = currentTeam;
 
-    if (student.team_id) {
+    if (!finalTeam) {
 
-      currentTeam = await Team.findById(
-        student.team_id
-      );
-
-    } else {
-
-      currentTeam = await Team.create({
+      finalTeam = await Team.create({
 
         leader_id:
           idMap[team.leader_collegeCode],
@@ -174,7 +175,7 @@ exports.checkSimilarity = async (req, res) => {
           },
 
           {
-            team_id: currentTeam._id,
+            team_id: finalTeam._id,
 
             specialization:
               member.specialization,
@@ -214,12 +215,19 @@ exports.checkSimilarity = async (req, res) => {
       await CurrentProject.find();
 
     // =====================
-    // MERGE ALL PROJECTS
+    // REMOVE CURRENT TEAM PROJECT
     // =====================
     const allProjects = [
+
       ...previousProjects,
-      ...currentProjects,
-    ].filter((p) => p.description);
+
+      ...currentProjects.filter(
+        (p) =>
+          p.description &&
+          p.team_id?.toString() !==
+          finalTeam?._id?.toString()
+      ),
+    ];
 
     // =====================
     // AI CHECK
@@ -292,7 +300,7 @@ exports.checkSimilarity = async (req, res) => {
 
       similarity,
 
-      team_id: currentTeam._id,
+      team_id: finalTeam?._id,
 
       similarProject:
         similarProjectDetails,
