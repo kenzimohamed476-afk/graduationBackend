@@ -553,78 +553,6 @@ exports.updateStatus = async (req, res) => {
     });
   }
 };
-
-// =====================================================
-// ADMIN APPROVE PROJECT
-// =====================================================
-exports.adminApproveProject = async (req, res) => {
-  // =====================
-  // CHECK ROLE
-  // =====================
-  if (req.user.role !== "admin") {
-    return res.status(403).json({
-      message: "Only admin can approve project",
-    });
-  }
-
-  try {
-    // =====================
-    // GET BODY
-    // =====================
-    const { project_code } = req.body;
-
-    // =====================
-    // GET PROJECT
-    // =====================
-    const project = await CurrentProject.findById(req.params.id);
-
-    // =====================
-    // CHECK PROJECT EXISTS
-    // =====================
-    if (!project) {
-      return res.status(404).json({
-        message: "Project not found",
-      });
-    }
-
-    // =====================
-    // PROJECT MUST BE APPROVED FIRST
-    // =====================
-    if (project.status !== "approved") {
-      return res.status(400).json({
-        message: "Project must be approved first",
-      });
-    }
-
-    // =====================
-    // UPDATE PROJECT
-    // =====================
-    project.project_code = project_code;
-
-    project.status = "ongoing";
-
-    // =====================
-    // SAVE
-    // =====================
-    await project.save();
-
-    // =====================
-    // RESPONSE
-    // =====================
-    res.json({
-      message: "Project is now ongoing",
-
-      project,
-    });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
-      message: err.message,
-    });
-  }
-};
-
 // =====================================================
 // UPLOAD DOCUMENTATION
 // =====================================================
@@ -1157,6 +1085,179 @@ exports.changeTA = async (req, res) => {
       project,
     });
   } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.getAdminDashboard = async (req, res) => {
+
+  try {
+
+    // =====================
+    // CHECK ROLE
+    // =====================
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        message: "Only admin",
+      });
+    }
+
+    // =====================
+    // GET PROJECTS
+    // =====================
+    const projects = await CurrentProject.find()
+
+      .populate("doctor_id", "name")
+
+      .populate("ta_id", "name")
+
+      .populate({
+        path: "team_id",
+
+        populate: {
+          path: "members",
+
+          select: "name collegeCode",
+        },
+      })
+
+      .sort({
+        createdAt: -1,
+      });
+
+    // =====================
+    // PROJECTS WITHOUT CODE
+    // approved but no code yet
+    // =====================
+    const projectsWithoutCode = projects.filter(
+      (p) =>
+        p.status === "approved" &&
+        !p.project_code
+    );
+
+    // =====================
+    // ONGOING PROJECTS
+    // =====================
+    const ongoingProjects = projects.filter(
+      (p) => p.status === "ongoing"
+    );
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
+
+      message: "Admin dashboard data",
+
+      projectsWithoutCodeCount:
+        projectsWithoutCode.length,
+
+      ongoingProjectsCount:
+        ongoingProjects.length,
+
+      projectsWithoutCode,
+
+      ongoingProjects,
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.adminApproveProject = async (req, res) => {
+
+  // =====================
+  // CHECK ROLE
+  // =====================
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      message: "Only admin can approve project",
+    });
+  }
+
+  try {
+
+    // =====================
+    // GET BODY
+    // =====================
+    const { project_code } = req.body;
+
+    // =====================
+    // VALIDATE PROJECT CODE
+    // =====================
+    if (!project_code) {
+      return res.status(400).json({
+        message: "Project code is required",
+      });
+    }
+
+    // =====================
+    // GET PROJECT
+    // =====================
+    const project = await CurrentProject.findById(req.params.id);
+
+    // =====================
+    // CHECK PROJECT EXISTS
+    // =====================
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    // =====================
+    // PROJECT MUST BE APPROVED FIRST
+    // =====================
+    if (project.status !== "approved") {
+      return res.status(400).json({
+        message: "Project must be approved first",
+      });
+    }
+
+    // =====================
+    // CHECK DUPLICATE CODE
+    // =====================
+    const existingCode = await CurrentProject.findOne({
+      project_code,
+    });
+
+    if (existingCode) {
+      return res.status(400).json({
+        message: "Project code already exists",
+      });
+    }
+
+    // =====================
+    // UPDATE PROJECT
+    // =====================
+    project.project_code = project_code;
+
+    project.status = "ongoing";
+
+    // =====================
+    // SAVE
+    // =====================
+    await project.save();
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
+      message: "Project approved successfully",
+
+      project,
+    });
+
+  } catch (err) {
+
     console.log(err);
 
     res.status(500).json({
