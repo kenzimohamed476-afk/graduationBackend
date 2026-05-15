@@ -8,7 +8,9 @@ const axios = require("axios");
 const mongoose = require("mongoose");
 // CHECK SIMILARITY + CREATE TEAMF
 exports.checkSimilarity = async (req, res) => {
+
   try {
+
     // CHECK LOGIN USER
     const student = await Student.findById(req.user.id);
 
@@ -37,7 +39,9 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     if (
       !team.members.some(
-        (m) => Number(m.collegeCode) === Number(team.leader_collegeCode),
+        (m) =>
+          Number(m.collegeCode) ===
+          Number(team.leader_collegeCode)
       )
     ) {
       return res.status(400).json({
@@ -48,7 +52,9 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // REMOVE DUPLICATES
     // =====================
-    const codes = team.members.map((m) => Number(m.collegeCode));
+    const codes = team.members.map(
+      (m) => Number(m.collegeCode)
+    );
 
     if (new Set(codes).size !== codes.length) {
       return res.status(400).json({
@@ -73,25 +79,48 @@ exports.checkSimilarity = async (req, res) => {
     // MAP IDS
     // =====================
     const idMap = {};
+
     students.forEach((s) => {
       idMap[s.collegeCode] = s._id;
     });
 
-    const memberIds = codes.map((c) => idMap[c]);
+    const memberIds = codes.map(
+      (c) => idMap[c]
+    );
 
     // =====================
-    // CHECK IF IN TEAM
+    // CHECK ACTIVE TEAM ONLY
+    // rejected projects allowed
     // =====================
     const existingMembers = await Student.find({
+
       _id: { $in: memberIds },
 
       team_id: { $ne: null },
     });
 
-    if (existingMembers.length > 0) {
-      return res.status(400).json({
-        message: "One or more students already in a team",
-      });
+    for (let member of existingMembers) {
+
+      const activeProject =
+        await CurrentProject.findOne({
+
+          team_id: member.team_id,
+
+          status: {
+            $in: [
+              "pending",
+              "approved",
+              "ongoing"
+            ]
+          }
+        });
+
+      if (activeProject) {
+        return res.status(400).json({
+          message:
+            "One or more students already in a team",
+        });
+      }
     }
 
     // =====================
@@ -106,9 +135,13 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // ONLY LEADER CAN CONTINUE
     // =====================
-    if (Number(student.collegeCode) !== Number(team.leader_collegeCode)) {
+    if (
+      Number(student.collegeCode) !==
+      Number(team.leader_collegeCode)
+    ) {
       return res.status(403).json({
-        message: "Only the selected leader can continue",
+        message:
+          "Only the selected leader can continue",
       });
     }
 
@@ -116,7 +149,9 @@ exports.checkSimilarity = async (req, res) => {
     // CREATE TEAM
     // =====================
     const newTeam = await Team.create({
-      leader_id: idMap[team.leader_collegeCode],
+
+      leader_id:
+        idMap[team.leader_collegeCode],
 
       members: memberIds,
     });
@@ -125,9 +160,11 @@ exports.checkSimilarity = async (req, res) => {
     // UPDATE STUDENTS
     // =====================
     for (let member of team.members) {
+
       if (!member.specialization) {
         return res.status(400).json({
-          message: "Each member must have specialization",
+          message:
+            "Each member must have specialization",
         });
       }
 
@@ -139,8 +176,9 @@ exports.checkSimilarity = async (req, res) => {
         {
           team_id: newTeam._id,
 
-          specialization: member.specialization,
-        },
+          specialization:
+            member.specialization,
+        }
       );
     }
 
@@ -149,12 +187,13 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     await Student.findOneAndUpdate(
       {
-        collegeCode: Number(team.leader_collegeCode),
+        collegeCode:
+          Number(team.leader_collegeCode),
       },
 
       {
         isLeader: true,
-      },
+      }
     );
 
     // =====================
@@ -167,46 +206,63 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // GET OLD PROJECTS
     // =====================
-    const previousProjects = await PreviousProject.find();
+    const previousProjects =
+      await PreviousProject.find();
 
-    const currentProjects = await CurrentProject.find();
+    const currentProjects =
+      await CurrentProject.find();
 
     // =====================
     // MERGE ALL PROJECTS
     // =====================
-    const allProjects = [...previousProjects, ...currentProjects].filter(
-      (p) => p.description,
-    );
+    const allProjects = [
+      ...previousProjects,
+      ...currentProjects,
+    ].filter((p) => p.description);
 
     // =====================
     // AI CHECK
     // =====================
     try {
+
       const response = await axios.post(
         "https://earnest-energy-production-aa56.up.railway.app/check",
+
         {
           problem: description,
 
-          projects: allProjects.map((p) => ({
-            id: p._id.toString(),
-            description: p.description,
-          })),
-        },
+          projects: allProjects.map(
+            (p) => ({
+              id: p._id.toString(),
+
+              description: p.description,
+            })
+          ),
+        }
       );
 
-      const results = response.data.results || [];
+      const results =
+        response.data.results || [];
 
       for (let rec of results) {
-        const sim = Number(rec.similarity);
+
+        const sim =
+          Number(rec.similarity);
 
         if (sim > similarity) {
+
           similarity = sim;
 
           similarProject = rec;
         }
       }
+
     } catch (err) {
-      console.log("AI ERROR:", err.message);
+
+      console.log(
+        "AI ERROR:",
+        err.message
+      );
     }
 
     // =====================
@@ -215,29 +271,34 @@ exports.checkSimilarity = async (req, res) => {
     let similarProjectDetails = null;
 
     if (similarProject) {
+
       similarProjectDetails =
-        (await PreviousProject.findById(similarProject.id)) ||
-        (await CurrentProject.findById(similarProject.id));
+        (await PreviousProject.findById(
+          similarProject.id
+        )) ||
+
+        (await CurrentProject.findById(
+          similarProject.id
+        ));
     }
 
     // =====================
     // RESPONSE
     // =====================
     res.json({
-      // لو أقل من 80
-      // يكمل
+
       allowed: similarity < 80,
 
       similarity,
 
-      // مهم جدًا
-      // هنرجع team id
-      // عشان نستخدمه بعدين
       team_id: newTeam._id,
 
-      similarProject: similarProjectDetails,
+      similarProject:
+        similarProjectDetails,
     });
+
   } catch (err) {
+
     console.log(err);
 
     res.status(500).json({
@@ -245,7 +306,6 @@ exports.checkSimilarity = async (req, res) => {
     });
   }
 };
-// ADD PROJECT
 // ADD PROJECT
 exports.addProject = async (req, res) => {
 
