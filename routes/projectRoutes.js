@@ -46,11 +46,7 @@ router.put(
 // ADMIN DASHBOARD
 // مهم يتحط قبل /:id
 // =====================================================
-router.get(
-  "/admin/dashboard",
-  auth,
-  projectController.getAdminDashboard
-);
+// router.get("/admin/dashboard",auth,projectController.getAdminDashboard);
 
 // =====================================================
 // ADMIN APPROVE PROJECT

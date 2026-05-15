@@ -183,7 +183,7 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     try {
       const response = await axios.post(
-        "https://ai-project-production-29cf.up.railway.app/check",
+        "https://earnest-energy-production-aa56.up.railway.app/check",
         {
           problem: description,
 
@@ -245,9 +245,7 @@ exports.checkSimilarity = async (req, res) => {
     });
   }
 };
-// =====================================================
 // ADD PROJECT
-// =====================================================
 exports.addProject = async (req, res) => {
   try {
     // =====================
@@ -402,9 +400,7 @@ exports.addProject = async (req, res) => {
     });
   }
 };
-// =====================================================
 // UPDATE STATUS
-// =====================================================
 exports.updateStatus = async (req, res) => {
 
   // =====================
@@ -553,9 +549,7 @@ exports.updateStatus = async (req, res) => {
     });
   }
 };
-// =====================================================
 // UPLOAD DOCUMENTATION
-// =====================================================
 exports.uploadDocumentation = async (req, res) => {
   try {
     const { documentation } = req.body;
@@ -586,9 +580,7 @@ exports.uploadDocumentation = async (req, res) => {
   }
 };
 
-// =====================================================
 // FINALIZE PROJECT
-// =====================================================
 exports.finalizeProject = async (req, res) => {
   try {
     const project = await CurrentProject.findById(req.params.id);
