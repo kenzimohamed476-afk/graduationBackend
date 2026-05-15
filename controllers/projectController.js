@@ -308,6 +308,7 @@ exports.checkSimilarity = async (req, res) => {
   }
 };
 // ADD PROJECT
+// ADD PROJECT
 exports.addProject = async (req, res) => {
 
   try {
@@ -391,66 +392,68 @@ exports.addProject = async (req, res) => {
     // =====================
     // ONLY LEADER CAN SUBMIT
     // =====================
-    if (team.leader_id.toString() !== student._id.toString()) {
+    if (
+      team.leader_id.toString() !==
+      student._id.toString()
+    ) {
       return res.status(403).json({
         message: "Only leader can submit project",
       });
     }
 
     // =====================
-    // CHECK ACTIVE PROJECT ONLY
+    // CHECK ACTIVE PROJECT
     // rejected projects allowed
     // =====================
-    const existingProject = await CurrentProject.findOne({
+    const existingProject =
+      await CurrentProject.findOne({
 
-      team_id: team._id,
+        team_id: team._id,
 
-      status: {
-        $in: [
-          "pending",
-          "approved",
-          "ongoing"
-        ]
-      }
-    });
+        status: {
+          $ne: "rejected"
+        }
+      });
 
     if (existingProject) {
       return res.status(400).json({
-        message: "Team already has an active project",
+        message:
+          "Team already has an active project",
       });
     }
 
     // =====================
     // SAVE PROJECT
     // =====================
-    const savedProject = await CurrentProject.create({
+    const savedProject =
+      await CurrentProject.create({
 
-      // BASIC DATA
-      title,
-      description,
-      tools,
-      specialization,
+        // BASIC DATA
+        title,
+        description,
+        tools,
+        specialization,
 
-      // DOCTOR + TA
-      doctor_id,
-      ta_id,
+        // DOCTOR + TA
+        doctor_id,
+        ta_id,
 
-      // TEAM LINK
-      team_id: team._id,
+        // TEAM LINK
+        team_id: team._id,
 
-      // YEAR
-      year,
+        // YEAR
+        year,
 
-      // STATUS
-      status: "pending",
+        // STATUS
+        status: "pending",
 
-      doctor_status: "pending",
+        doctor_status: "pending",
 
-      ta_status: "pending",
+        ta_status: "pending",
 
-      // SIMILARITY
-      similarity_score,
-    });
+        // SIMILARITY
+        similarity_score,
+      });
 
     // =====================
     // LINK PROJECT TO TEAM
@@ -463,7 +466,9 @@ exports.addProject = async (req, res) => {
     // RESPONSE
     // =====================
     res.status(201).json({
-      message: "Project submitted successfully",
+
+      message:
+        "Project submitted successfully",
 
       savedProject,
     });
