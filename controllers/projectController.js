@@ -308,7 +308,6 @@ exports.checkSimilarity = async (req, res) => {
   }
 };
 // ADD PROJECT
-// ADD PROJECT
 exports.addProject = async (req, res) => {
 
   try {
