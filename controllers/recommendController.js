@@ -1,4 +1,5 @@
 const Idea = require("../models/idea");
+const CurrentProject = require("../models/currentProject");
 
 // ==========================
 // RECOMMEND IDEAS
