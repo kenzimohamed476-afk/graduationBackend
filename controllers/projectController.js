@@ -245,10 +245,6 @@ exports.checkSimilarity = async (req, res) => {
     });
   }
 };
-
-// =====================================================
-// ADD PROJECT
-// =====================================================
 // =====================================================
 // ADD PROJECT
 // =====================================================
@@ -792,6 +788,7 @@ exports.getDoctorDashboard = async (req, res) => {
 
 exports.getProjectDetails = async (req, res) => {
   try {
+
     const project = await CurrentProject.findById(req.params.id)
 
       .populate({
@@ -808,12 +805,18 @@ exports.getProjectDetails = async (req, res) => {
 
       .populate("ta_id", "name");
 
+    // =====================
+    // CHECK PROJECT
+    // =====================
     if (!project) {
       return res.status(404).json({
         message: "Project not found",
       });
     }
 
+    // =====================
+    // RESPONSE
+    // =====================
     res.status(200).json({
       message: "Project details",
 
@@ -828,18 +831,31 @@ exports.getProjectDetails = async (req, res) => {
 
         specialization: project.specialization,
 
+        // FINAL STATUS
         status: project.status,
 
+        // DOCTOR STATUS
+        doctor_status: project.doctor_status,
+
+        // TA STATUS
+        ta_status: project.ta_status,
+
+        // SIMILARITY
         similarity_score: project.similarity_score,
 
+        // TEAM
         team: project.team_id,
 
-        //doctor: project.doctor_id,
+        // DOCTOR
+        doctor: project.doctor_id,
 
+        // TA
         ta: project.ta_id,
       },
     });
+
   } catch (err) {
+
     console.log(err);
 
     res.status(500).json({
