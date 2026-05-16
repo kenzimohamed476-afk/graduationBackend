@@ -272,6 +272,9 @@ exports.handleRequest = async (req, res) => {
 // =====================================================
 // LEAVE TEAM
 // =====================================================
+// =====================================================
+// LEAVE TEAM
+// =====================================================
 exports.leaveTeam = async (req, res) => {
 
   try {
@@ -319,8 +322,47 @@ exports.leaveTeam = async (req, res) => {
       student._id.toString()
     ) {
 
-      // remove leader from members
-      const remainingMembers =
+      const { new_leader_id } =
+        req.body;
+
+      // لازم يختار ليدر جديد
+      if (!new_leader_id) {
+        return res.status(400).json({
+          message:
+            "Leader must choose new leader"
+        });
+      }
+
+      // مينفعش يختار نفسه
+      if (
+        new_leader_id ===
+        student._id.toString()
+      ) {
+        return res.status(400).json({
+          message:
+            "Invalid new leader"
+        });
+      }
+
+      // نتأكد إنه member
+      const isMember =
+        team.members.some(
+
+          (memberId) =>
+
+            memberId.toString() ===
+            new_leader_id
+        );
+
+      if (!isMember) {
+        return res.status(400).json({
+          message:
+            "New leader must be team member"
+        });
+      }
+
+      // remove old leader
+      team.members =
         team.members.filter(
 
           (memberId) =>
@@ -329,51 +371,29 @@ exports.leaveTeam = async (req, res) => {
             student._id.toString()
         );
 
-      // =====================
-      // NO MEMBERS -> DELETE TEAM
-      // =====================
-      if (remainingMembers.length === 0) {
+      // set new leader
+      team.leader_id =
+        new_leader_id;
 
-        await Team.findByIdAndDelete(
-          team._id
-        );
+      await team.save();
 
-      } else {
+      // update new leader
+      await Student.findByIdAndUpdate(
 
-        // =====================
-        // SET NEW LEADER
-        // =====================
-        team.leader_id =
-          remainingMembers[0];
+        new_leader_id,
 
-        team.members =
-          remainingMembers;
+        {
+          isLeader: true
+        }
+      );
 
-        await team.save();
-
-        // update new leader
-        await Student.findByIdAndUpdate(
-
-          remainingMembers[0],
-
-          {
-            isLeader: true
-          }
-        );
-      }
-
-      // =====================
-      // REMOVE TEAM FROM OLD LEADER
-      // =====================
+      // remove old leader team
       student.team_id = null;
 
       student.isLeader = false;
 
       await student.save();
 
-      // =====================
-      // RESPONSE
-      // =====================
       return res.status(200).json({
 
         success: true,
