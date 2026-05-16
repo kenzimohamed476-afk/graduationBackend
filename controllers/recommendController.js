@@ -44,18 +44,17 @@ exports.recommendIdeas = async (req, res) => {
 
         ideas: ideas.map((idea) => ({
 
-          id: idea._id,
+      id: idea._id.toString(),
 
-          title: idea.title,
+      title: idea.title,
 
-          description: idea.description,
+      description: idea.description,
 
-          specialization: idea.specialization,
+      specialization: idea.specialization,
 
-          tools: idea.tools
+      tools: idea.tools
 
-        }))
-      }
+    }))}
     );
 
     // =====================
