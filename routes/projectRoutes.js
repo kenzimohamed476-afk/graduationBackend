@@ -6,31 +6,16 @@ const auth = require("../middleware/auth");
 
 const projectController = require("../controllers/projectController");
 
-// =====================================================
+
 // CHECK SIMILARITY
-// =====================================================
-router.post(
-  "/check-similarity",
-  auth,
-  projectController.checkSimilarity
-);
+router.post("/check-similarity",auth,projectController.checkSimilarity);
 
-// =====================================================
+
 // ADD PROJECT
-// =====================================================
-router.post(
-  "/add",
-  auth,
-  projectController.addProject
-);
+router.post("/add",auth,projectController.addProject);
 
-// =====================================================
 // DOCTOR / TA UPDATE STATUS
-// =====================================================
-router.put(
-  "/update-status/:id",
-  auth,
-  projectController.updateStatus
+router.put("/update-status/:id",auth,projectController.updateStatus
 );
 
 // =====================================================
@@ -43,10 +28,40 @@ router.put(
 );
 
 // =====================================================
-// ADMIN DASHBOARD
-// مهم يتحط قبل /:id
+// DOCTOR DASHBOARD
 // =====================================================
-// router.get("/admin/dashboard",auth,projectController.getAdminDashboard);
+router.get(
+  "/doctor/dashboard",
+  auth,
+  projectController.getDoctorDashboard
+);
+
+// =====================================================
+// TA DASHBOARD
+// =====================================================
+router.get(
+  "/ta/dashboard",
+  auth,
+  projectController.getTADashboard
+);
+
+// =====================================================
+// STUDENT DASHBOARD
+// =====================================================
+router.get(
+  "/student/dashboard",
+  auth,
+  projectController.getStudentDashboard
+);
+
+// =====================================================
+// ADMIN DASHBOARD
+// =====================================================
+router.get(
+  "/admin/dashboard",
+  auth,
+  projectController.getAdminDashboard
+);
 
 // =====================================================
 // ADMIN APPROVE PROJECT
