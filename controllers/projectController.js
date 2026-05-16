@@ -6,7 +6,6 @@ const TimePlan = require("../models/timePlan");
 const User = require("../models/user");
 const axios = require("axios");
 const mongoose = require("mongoose");
-// CHECK SIMILARITY + CREATE TEAMF
 exports.checkSimilarity = async (req, res) => {
 
   try {
@@ -315,7 +314,6 @@ exports.checkSimilarity = async (req, res) => {
     });
   }
 };
-// ADD PROJECT
 exports.addProject = async (req, res) => {
 
   try {
@@ -489,7 +487,6 @@ exports.addProject = async (req, res) => {
     });
   }
 };
-// UPDATE STATUS
 exports.updateStatus = async (req, res) => {
 
   // =====================
@@ -638,7 +635,6 @@ exports.updateStatus = async (req, res) => {
     });
   }
 };
-// UPLOAD DOCUMENTATION
 exports.uploadDocumentation = async (req, res) => {
   try {
     const { documentation } = req.body;
@@ -668,8 +664,6 @@ exports.uploadDocumentation = async (req, res) => {
     });
   }
 };
-
-// FINALIZE PROJECT
 exports.finalizeProject = async (req, res) => {
   try {
     const project = await CurrentProject.findById(req.params.id);
@@ -713,11 +707,6 @@ exports.finalizeProject = async (req, res) => {
     });
   }
 };
-
-// =====================================================
-// DOCTOR DASHBOARD
-// =====================================================
-
 exports.getDoctorDashboard = async (req, res) => {
   try {
     // =====================
@@ -799,10 +788,6 @@ exports.getDoctorDashboard = async (req, res) => {
     });
   }
 };
-// =====================================================
-// GET PROJECT DETAILS
-// =====================================================
-
 exports.getProjectDetails = async (req, res) => {
   try {
 
@@ -880,7 +865,6 @@ exports.getProjectDetails = async (req, res) => {
     });
   }
 };
-
 exports.getStudentDashboard = async (req, res) => {
   try {
     const student = await Student.findById(req.user.id);
@@ -966,9 +950,6 @@ exports.getStudentDashboard = async (req, res) => {
     });
   }
 };
-// =====================================================
-// TA DASHBOARD
-// =====================================================
 exports.getTADashboard = async (req, res) => {
   try {
     // =====================
@@ -1047,9 +1028,6 @@ exports.getTADashboard = async (req, res) => {
     });
   }
 };
-// =====================================================
-// CHANGE TA
-// =====================================================
 exports.changeTA = async (req, res) => {
   try {
     // =====================

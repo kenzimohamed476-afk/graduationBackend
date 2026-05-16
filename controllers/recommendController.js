@@ -9,41 +9,108 @@ exports.recommendIdeas = async (req, res) => {
 
   try {
 
-    const {
-      specializations
-    } = req.body;
+    // =====================
+    // GET SPECIALIZATIONS
+    // =====================
+    const { specializations } = req.body;
 
+    // =====================
+    // VALIDATION
+    // =====================
     if (
       !specializations ||
       specializations.length === 0
     ) {
 
       return res.status(400).json({
-        message:
-          "Specializations required"
+        message: "Specializations required"
       });
     }
 
-    const ideas = await Idea.find({
+    // =====================
+    // GET ALL IDEAS
+    // =====================
+    const ideas = await Idea.find();
 
-      specialization: {
-        $in: specializations
+    // =====================
+    // AI RECOMMENDATION
+    // =====================
+    const response = await axios.post(
+
+      "https://earnest-energy-production-aa56.up.railway.app/check",
+
+      {
+        student_specializations: specializations,
+
+        ideas: ideas.map((idea) => ({
+
+          id: idea._id,
+
+          title: idea.title,
+
+          description: idea.description,
+
+          specialization: idea.specialization,
+
+          tools: idea.tools
+
+        }))
       }
+    );
 
-    }).limit(10);
+    // =====================
+    // GET AI RESULTS
+    // =====================
+    const recommendations =
+      response.data.recommendations || [];
 
-    res.json({
+    // =====================
+    // EXTRACT IDS
+    // =====================
+    const recommendedIds =
+      recommendations.map((r) => r.id);
+
+    // =====================
+    // GET MATCHED IDEAS
+    // =====================
+    const recommendedIdeas =
+      await Idea.find({
+
+        _id: {
+          $in: recommendedIds
+        }
+
+      });
+
+    // =====================
+    // SORT BY AI ORDER
+    // =====================
+    const sortedIdeas =
+      recommendedIds.map((id) =>
+
+        recommendedIdeas.find(
+          (idea) =>
+            idea._id.toString() === id.toString()
+        )
+
+      ).filter(Boolean);
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
 
       message:
         "Ideas recommended successfully",
 
-      count: ideas.length,
+      count: sortedIdeas.length,
 
-      ideas
-
+      ideas: sortedIdeas
     });
 
   } catch (err) {
+
+    console.log(err);
 
     res.status(500).json({
       message: err.message

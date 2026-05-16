@@ -268,3 +268,103 @@ exports.handleRequest = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+// =====================================================
+// LEAVE TEAM
+// =====================================================
+exports.leaveTeam = async (req, res) => {
+
+  try {
+
+    // =====================
+    // GET STUDENT
+    // =====================
+    const student = await Student.findById(
+      req.user.id
+    );
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found"
+      });
+    }
+
+    // =====================
+    // CHECK TEAM
+    // =====================
+    if (!student.team_id) {
+      return res.status(400).json({
+        message: "Student is not in a team"
+      });
+    }
+
+    // =====================
+    // GET TEAM
+    // =====================
+    const team = await Team.findById(
+      student.team_id
+    );
+
+    if (!team) {
+      return res.status(404).json({
+        message: "Team not found"
+      });
+    }
+
+    // =====================
+    // PREVENT LEADER LEAVE
+    // =====================
+    if (
+      team.leader_id.toString() ===
+      student._id.toString()
+    ) {
+      return res.status(400).json({
+
+        success: false,
+
+        message:
+          "Leader cannot leave the team"
+      });
+    }
+
+    // =====================
+    // REMOVE MEMBER
+    // =====================
+    team.members = team.members.filter(
+
+      (memberId) =>
+
+        memberId.toString() !==
+        student._id.toString()
+    );
+
+    await team.save();
+
+    // =====================
+    // REMOVE TEAM ID
+    // =====================
+    student.team_id = null;
+
+    student.isLeader = false;
+
+    await student.save();
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
+
+      success: true,
+
+      message:
+        "Left team successfully"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
