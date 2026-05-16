@@ -130,7 +130,7 @@ exports.login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid college code or password"
+        message: "Invalid email or password"
       });
     }
 
@@ -139,7 +139,7 @@ exports.login = async (req, res) => {
 
     if (!isMatch) {
       return res.status(401).json({
-        message: "Invalid college code or password"
+        message: "Invalid email or password"
       });
     }
 
