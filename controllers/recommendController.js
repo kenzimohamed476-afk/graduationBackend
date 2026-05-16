@@ -310,6 +310,7 @@ exports.checkIdeaSimilarity = async (req, res) => {
     });
   }
 };
+
 // =====================================================
 // ADD IDEA
 // =====================================================
@@ -329,18 +330,12 @@ exports.addIdea = async (req, res) => {
     // =====================
     // GET BODY
     // =====================
-    const idea = await Idea.create({
-
-  title,
-
-  description,
-
-  tools,
-
-  specialization,
-
-  doctor_id: req.user.id
-});
+    const {
+      title,
+      description,
+      tools,
+      specialization
+    } = req.body;
 
     // =====================
     // VALIDATION
@@ -366,7 +361,9 @@ exports.addIdea = async (req, res) => {
 
       tools,
 
-      specialization
+      specialization,
+
+      doctor_id: req.user.id
     });
 
     // =====================
