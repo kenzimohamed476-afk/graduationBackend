@@ -1,6 +1,7 @@
 const Idea = require("../models/idea");
 const CurrentProject = require("../models/currentProject");
-
+const PreviousProject = require("../models/previousProject");
+const axios = require("axios");
 // ==========================
 // RECOMMEND IDEAS
 // ==========================
@@ -97,6 +98,213 @@ exports.selectIdea = async (req, res) => {
       message: "Idea selected successfully",
 
       project
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+// =====================================================
+// CHECK IDEA SIMILARITY
+// =====================================================
+exports.checkIdeaSimilarity = async (req, res) => {
+
+  try {
+
+    // =====================
+    // CHECK ROLE
+    // =====================
+    if (req.user.role !== "doctor") {
+      return res.status(403).json({
+        message: "Only doctor can add ideas"
+      });
+    }
+
+    // =====================
+    // GET BODY
+    // =====================
+    const {
+      title,
+      description,
+      tools,
+      specialization
+    } = req.body;
+
+    // =====================
+    // VALIDATION
+    // =====================
+    if (
+      !title ||
+      !description ||
+      !specialization ||
+      specialization.length === 0
+    ) {
+      return res.status(400).json({
+        message: "Missing required fields"
+      });
+    }
+
+    // =====================
+    // DEFAULT VALUES
+    // =====================
+    let similarity = 0;
+
+    let similarProject = null;
+
+    // =====================
+    // GET PROJECTS
+    // =====================
+    const previousProjects =
+      await PreviousProject.find();
+
+    const currentProjects =
+      await CurrentProject.find();
+
+    // =====================
+    // MERGE PROJECTS
+    // =====================
+    const allProjects = [
+
+      ...previousProjects,
+
+      ...currentProjects
+
+    ].filter((p) => p.description);
+
+    // =====================
+    // AI CHECK
+    // =====================
+    try {
+
+      const response = await axios.post(
+
+        "https://earnest-energy-production-aa56.up.railway.app/check",
+
+        {
+          problem: description,
+
+          projects: allProjects.map(
+            (p) => ({
+              id: p._id.toString(),
+
+              description: p.description,
+            })
+          ),
+        }
+      );
+
+      const results =
+        response.data.results || [];
+
+      for (let rec of results) {
+
+        const sim =
+          Number(rec.similarity);
+
+        if (sim > similarity) {
+
+          similarity = sim;
+
+          similarProject = rec;
+        }
+      }
+
+    } catch (err) {
+
+      console.log(
+        "AI ERROR:",
+        err.message
+      );
+    }
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
+
+      allowed: similarity < 80,
+
+      similarity,
+
+      similarProject
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+// =====================================================
+// ADD IDEA
+// =====================================================
+exports.addIdea = async (req, res) => {
+
+  try {
+
+    // =====================
+    // CHECK ROLE
+    // =====================
+    if (req.user.role !== "doctor") {
+      return res.status(403).json({
+        message: "Only doctor can add ideas"
+      });
+    }
+
+    // =====================
+    // GET BODY
+    // =====================
+    const {
+      title,
+      description,
+      tools,
+      specialization
+    } = req.body;
+
+    // =====================
+    // VALIDATION
+    // =====================
+    if (
+      !title ||
+      !description ||
+      !specialization
+    ) {
+      return res.status(400).json({
+        message: "Missing required fields"
+      });
+    }
+
+    // =====================
+    // CREATE IDEA
+    // =====================
+    const idea = await Idea.create({
+
+      title,
+
+      description,
+
+      tools,
+
+      specialization
+    });
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(201).json({
+
+      message:
+        "Idea added successfully",
+
+      idea
     });
 
   } catch (err) {
