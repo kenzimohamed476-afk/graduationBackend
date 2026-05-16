@@ -39,5 +39,13 @@ router.post(
   auth,
   recommendController.addIdea
 );
+// =====================================================
+// GET MY IDEAS
+// =====================================================
+router.get(
+  "/my-ideas",
+  auth,
+  recommendController.getMyIdeas
+);
 
 module.exports = router;

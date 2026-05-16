@@ -316,3 +316,52 @@ exports.addIdea = async (req, res) => {
     });
   }
 };
+// =====================================================
+// GET DOCTOR IDEAS
+// =====================================================
+exports.getMyIdeas = async (req, res) => {
+
+  try {
+
+    // =====================
+    // CHECK ROLE
+    // =====================
+    if (req.user.role !== "doctor") {
+      return res.status(403).json({
+        message: "Only doctor"
+      });
+    }
+
+    // =====================
+    // GET IDEAS
+    // =====================
+    const ideas = await Idea.find({
+
+      doctor_id: req.user.id
+
+    }).sort({
+
+      createdAt: -1
+    });
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
+
+      message: "Doctor ideas",
+
+      count: ideas.length,
+
+      ideas
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};

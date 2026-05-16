@@ -5,20 +5,13 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 
 const projectController = require("../controllers/projectController");
-
-
 // CHECK SIMILARITY
 router.post("/check-similarity",auth,projectController.checkSimilarity);
-
-
 // ADD PROJECT
 router.post("/add",auth,projectController.addProject);
-
 // DOCTOR / TA UPDATE STATUS
 router.put("/update-status/:id",auth,projectController.updateStatus
 );
-
-// =====================================================
 // CHANGE TA
 // =====================================================
 router.put(
