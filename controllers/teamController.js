@@ -52,8 +52,6 @@ exports.createTeam = async (req, res) => {
 };
 
 
-
-// =====================
 // ADD MEMBER
 // =====================
 exports.addMember = async (req, res) => {
@@ -271,6 +269,9 @@ exports.handleRequest = async (req, res) => {
 // =====================================================
 // LEAVE TEAM
 // =====================================================
+// =====================================================
+// LEAVE TEAM
+// =====================================================
 exports.leaveTeam = async (req, res) => {
 
   try {
@@ -311,23 +312,79 @@ exports.leaveTeam = async (req, res) => {
     }
 
     // =====================
-    // PREVENT LEADER LEAVE
+    // IF STUDENT IS LEADER
     // =====================
     if (
       team.leader_id.toString() ===
       student._id.toString()
     ) {
-      return res.status(400).json({
 
-        success: false,
+      // remove leader from members
+      const remainingMembers =
+        team.members.filter(
+
+          (memberId) =>
+
+            memberId.toString() !==
+            student._id.toString()
+        );
+
+      // =====================
+      // NO MEMBERS -> DELETE TEAM
+      // =====================
+      if (remainingMembers.length === 0) {
+
+        await Team.findByIdAndDelete(
+          team._id
+        );
+
+      } else {
+
+        // =====================
+        // SET NEW LEADER
+        // =====================
+        team.leader_id =
+          remainingMembers[0];
+
+        team.members =
+          remainingMembers;
+
+        await team.save();
+
+        // update new leader
+        await Student.findByIdAndUpdate(
+
+          remainingMembers[0],
+
+          {
+            isLeader: true
+          }
+        );
+      }
+
+      // =====================
+      // REMOVE TEAM FROM OLD LEADER
+      // =====================
+      student.team_id = null;
+
+      student.isLeader = false;
+
+      await student.save();
+
+      // =====================
+      // RESPONSE
+      // =====================
+      return res.status(200).json({
+
+        success: true,
 
         message:
-          "Leader cannot leave the team"
+          "Leader left team successfully"
       });
     }
 
     // =====================
-    // REMOVE MEMBER
+    // REMOVE NORMAL MEMBER
     // =====================
     team.members = team.members.filter(
 
