@@ -72,14 +72,15 @@ exports.recommendIdeas = async (req, res) => {
     // =====================
     // GET MATCHED IDEAS
     // =====================
-    const recommendedIdeas =
-      await Idea.find({
+    const mongoose = require("mongoose");
 
-        _id: {
-          $in: recommendedIds
-        }
+const objectIds = recommendedIds.map(
+  (id) => new mongoose.Types.ObjectId(id)
+);
 
-      });
+const recommendedIdeas = await Idea.find({
+  _id: { $in: objectIds }
+});
 
     // =====================
     // SORT BY AI ORDER
