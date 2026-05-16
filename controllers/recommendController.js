@@ -30,7 +30,7 @@ exports.recommendIdeas = async (req, res) => {
     // =====================
     // GET ALL IDEAS
     // =====================
-    const ideas = await Idea.find().limit(30);
+    const ideas = await Idea.find();
 
     // =====================
     // AI RECOMMENDATION
