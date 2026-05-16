@@ -329,12 +329,18 @@ exports.addIdea = async (req, res) => {
     // =====================
     // GET BODY
     // =====================
-    const {
-      title,
-      description,
-      tools,
-      specialization
-    } = req.body;
+    const idea = await Idea.create({
+
+  title,
+
+  description,
+
+  tools,
+
+  specialization,
+
+  doctor_id: req.user.id
+});
 
     // =====================
     // VALIDATION
