@@ -12,6 +12,10 @@ const ideaSchema = new mongoose.Schema(
       required: true
     },
 
+    doctor_id: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Doctor"
+},
     // خليها small letters
     tools: [
       {
