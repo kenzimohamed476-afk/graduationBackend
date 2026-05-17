@@ -432,3 +432,72 @@ exports.getMyIdeas = async (req, res) => {
     });
   }
 };
+// =====================================================
+// DELETE IDEA
+// =====================================================
+exports.deleteIdea = async (req, res) => {
+
+  try {
+
+    // =====================
+    // CHECK ROLE
+    // =====================
+    if (req.user.role !== "doctor") {
+      return res.status(403).json({
+        message: "Only doctor can delete ideas"
+      });
+    }
+
+    // =====================
+    // GET IDEA
+    // =====================
+    const idea = await Idea.findById(
+      req.params.id
+    );
+
+    if (!idea) {
+      return res.status(404).json({
+        message: "Idea not found"
+      });
+    }
+
+    // =====================
+    // CHECK OWNER
+    // =====================
+    if (
+      idea.doctor_id.toString() !==
+      req.user.id
+    ) {
+      return res.status(403).json({
+        message:
+          "You can delete only your ideas"
+      });
+    }
+
+    // =====================
+    // DELETE IDEA
+    // =====================
+    await Idea.findByIdAndDelete(
+      req.params.id
+    );
+
+    // =====================
+    // RESPONSE
+    // =====================
+    res.status(200).json({
+
+      success: true,
+
+      message:
+        "Idea deleted successfully"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};

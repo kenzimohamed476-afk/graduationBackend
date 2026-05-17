@@ -47,5 +47,9 @@ router.get(
   auth,
   recommendController.getMyIdeas
 );
-
+router.delete(
+  "/delete-idea/:id",
+  auth,
+  recommendController.deleteIdea
+);
 module.exports = router;
