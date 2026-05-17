@@ -8,8 +8,6 @@ const userController = require("../controllers/userController");
 
 const projectController = require("../controllers/projectController");
 
-// register
-router.post("/add", userController.addUser);
 
 // login
 router.post("/login", userController.login);
