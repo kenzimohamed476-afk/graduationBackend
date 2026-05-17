@@ -14,7 +14,7 @@ const ideaSchema = new mongoose.Schema(
 
     doctor_id: {
   type: mongoose.Schema.Types.ObjectId,
-  ref: "Doctor"
+  ref: "user"
 },
     // خليها small letters
     tools: [
