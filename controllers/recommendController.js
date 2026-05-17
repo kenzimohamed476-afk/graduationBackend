@@ -333,7 +333,6 @@ exports.addIdea = async (req, res) => {
     const {
       title,
       description,
-      tools,
       specialization
     } = req.body;
 
