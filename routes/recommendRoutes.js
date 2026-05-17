@@ -4,18 +4,53 @@ const router = express.Router();
 
 const auth = require("../middleware/auth");
 
-const recommendController = require("../controllers/recommendController");
-
 const allowRoles = require("../middleware/allowRoles");
 
+const recommendController = require("../controllers/recommendController");
+
+// =====================
+// RECOMMEND IDEAS
+// =====================
 router.post("/recommend-ideas", recommendController.recommendIdeas);
 
-router.post("/check-idea-similarity",auth,recommendController.checkIdeaSimilarity,);
+// =====================
+// CHECK IDEA SIMILARITY
+// =====================
+router.post(
+  "/check-idea-similarity",
+  auth,
+  allowRoles("doctor"),
+  recommendController.checkIdeaSimilarity,
+);
 
+// =====================
+// SELECT IDEA
+// =====================
 router.put("/select-idea/:id", auth, recommendController.selectIdea);
 
-router.post("/add",verifyToken,allowRoles("doctor"),addIdea);
+// =====================
+// ADD IDEA
+// =====================
+router.post("/add", auth, allowRoles("doctor"), recommendController.addIdea);
 
-router.get("/my-ideas", auth, recommendController.getMyIdeas);
-router.delete("/delete-idea/:id", auth, recommendController.deleteIdea);
+// =====================
+// GET MY IDEAS
+// =====================
+router.get(
+  "/my-ideas",
+  auth,
+  allowRoles("doctor"),
+  recommendController.getMyIdeas,
+);
+
+// =====================
+// DELETE IDEA
+// =====================
+router.delete(
+  "/delete-idea/:id",
+  auth,
+  allowRoles("doctor"),
+  recommendController.deleteIdea,
+);
+
 module.exports = router;
