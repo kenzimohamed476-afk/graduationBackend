@@ -358,8 +358,6 @@ exports.addIdea = async (req, res) => {
 
       description,
 
-      tools,
-
       specialization,
 
       doctor_id: req.user.id
