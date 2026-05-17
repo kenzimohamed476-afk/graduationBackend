@@ -2,28 +2,20 @@ const User = require("../models/user");
 const userSchema = require("../validation/userValidation");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
-// ============================================================
-// LOGIN
-// ============================================================
 exports.login = async (req, res) => {
   try {
     const { email , password } = req.body;
 
-    //  لو ناقص بيانات
+    
     if (!email || !password) {
       return res.status(400).json({
         message: "email and password are required"
       });
     }
 
-   //   لو فالريكوست عندي باعت string بحوله ل number 
-  
     const user = await User.findOne({
       email: String(email)
     });
-
-    // Invalid college code or password
 
     if (!user) {
       return res.status(401).json({
@@ -31,7 +23,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // مقارنة الباسورد
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -40,7 +31,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    //  إنشاء توكن
     const token = jwt.sign(
       {
         id: user._id,
@@ -50,7 +40,7 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    //  حذف الباسورد
+  
     const userData = user.toObject();
     delete userData.password;
 

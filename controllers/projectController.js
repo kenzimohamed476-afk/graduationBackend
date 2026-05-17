@@ -4,14 +4,19 @@ const Team = require("../models/team");
 const Student = require("../models/student");
 const TimePlan = require("../models/timePlan");
 const User = require("../models/user");
-const axios = require("axios");
 const mongoose = require("mongoose");
+const { checkAISimilarity } = require("../utils/aiSimilarity");
+
 exports.checkSimilarity = async (req, res) => {
 
   try {
 
+    // =====================
     // CHECK LOGIN USER
-    const student = await Student.findById(req.user.id);
+    // =====================
+    const student = await Student.findById(
+      req.user.id
+    );
 
     if (!student) {
       return res.status(404).json({
@@ -22,14 +27,19 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // GET BODY
     // =====================
-    const { description, team } = req.body;
+    const {
+      description,
+      team
+    } = req.body;
 
     // =====================
     // VALIDATION
     // =====================
     if (!description || !team) {
+
       return res.status(400).json({
-        message: "Description and team are required",
+        message:
+          "Description and team are required",
       });
     }
 
@@ -37,40 +47,62 @@ exports.checkSimilarity = async (req, res) => {
     // VALIDATE LEADER
     // =====================
     if (
+
       !team.members.some(
+
         (m) =>
+
           Number(m.collegeCode) ===
           Number(team.leader_collegeCode)
       )
     ) {
+
       return res.status(400).json({
-        message: "Leader must be one of the team members",
+        message:
+          "Leader must be one of the team members",
       });
     }
 
     // =====================
     // REMOVE DUPLICATES
     // =====================
-    const codes = team.members.map(
-      (m) => Number(m.collegeCode)
-    );
+    const codes =
+      team.members.map(
 
-    if (new Set(codes).size !== codes.length) {
+        (m) =>
+          Number(m.collegeCode)
+      );
+
+    if (
+      new Set(codes).size !==
+      codes.length
+    ) {
+
       return res.status(400).json({
-        message: "Duplicate members not allowed",
+        message:
+          "Duplicate members not allowed",
       });
     }
 
     // =====================
     // GET STUDENTS
     // =====================
-    const students = await Student.find({
-      collegeCode: { $in: codes },
-    });
+    const students =
+      await Student.find({
 
-    if (students.length !== codes.length) {
+        collegeCode: {
+          $in: codes,
+        },
+      });
+
+    if (
+      students.length !==
+      codes.length
+    ) {
+
       return res.status(400).json({
-        message: "One or more students not found",
+        message:
+          "One or more students not found",
       });
     }
 
@@ -83,16 +115,19 @@ exports.checkSimilarity = async (req, res) => {
       idMap[s.collegeCode] = s._id;
     });
 
-    const memberIds = codes.map(
-      (c) => idMap[c]
-    );
+    const memberIds =
+      codes.map((c) => idMap[c]);
 
     // =====================
     // GET TEAM
     // =====================
     const currentTeam =
       student.team_id
-        ? await Team.findById(student.team_id)
+
+        ? await Team.findById(
+            student.team_id
+          )
+
         : null;
 
     // =====================
@@ -111,6 +146,7 @@ exports.checkSimilarity = async (req, res) => {
         });
 
       if (existingProject) {
+
         return res.status(400).json({
           message:
             "Team already has an active project",
@@ -122,8 +158,10 @@ exports.checkSimilarity = async (req, res) => {
     // MAX MEMBERS
     // =====================
     if (memberIds.length > 5) {
+
       return res.status(400).json({
-        message: "Max 5 members allowed",
+        message:
+          "Max 5 members allowed",
       });
     }
 
@@ -131,9 +169,14 @@ exports.checkSimilarity = async (req, res) => {
     // ONLY LEADER CAN CONTINUE
     // =====================
     if (
+
       Number(student.collegeCode) !==
-      Number(team.leader_collegeCode)
+
+      Number(
+        team.leader_collegeCode
+      )
     ) {
+
       return res.status(403).json({
         message:
           "Only the selected leader can continue",
@@ -147,20 +190,28 @@ exports.checkSimilarity = async (req, res) => {
 
     if (!finalTeam) {
 
-      finalTeam = await Team.create({
+      finalTeam =
+        await Team.create({
 
-        leader_id:
-          idMap[team.leader_collegeCode],
+          leader_id:
+            idMap[
+              team.leader_collegeCode
+            ],
 
-        members: memberIds,
-      });
+          members: memberIds,
+        });
 
       // =====================
       // UPDATE STUDENTS
       // =====================
-      for (let member of team.members) {
+      for (
+        let member of team.members
+      ) {
 
-        if (!member.specialization) {
+        if (
+          !member.specialization
+        ) {
+
           return res.status(400).json({
             message:
               "Each member must have specialization",
@@ -168,13 +219,17 @@ exports.checkSimilarity = async (req, res) => {
         }
 
         await Student.findOneAndUpdate(
+
           {
             collegeCode:
-              Number(member.collegeCode),
+              Number(
+                member.collegeCode
+              ),
           },
 
           {
-            team_id: finalTeam._id,
+            team_id:
+              finalTeam._id,
 
             specialization:
               member.specialization,
@@ -186,9 +241,12 @@ exports.checkSimilarity = async (req, res) => {
       // SET LEADER
       // =====================
       await Student.findOneAndUpdate(
+
         {
           collegeCode:
-            Number(team.leader_collegeCode),
+            Number(
+              team.leader_collegeCode
+            ),
         },
 
         {
@@ -221,8 +279,11 @@ exports.checkSimilarity = async (req, res) => {
       ...previousProjects,
 
       ...currentProjects.filter(
+
         (p) =>
+
           p.description &&
+
           p.team_id?.toString() !==
           finalTeam?._id?.toString()
       ),
@@ -231,56 +292,27 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // AI CHECK
     // =====================
-    try {
-
-      const response = await axios.post(
-        "https://earnest-energy-production-aa56.up.railway.app/check",
-
-        {
-          problem: description,
-
-          projects: allProjects.map(
-            (p) => ({
-              id: p._id.toString(),
-
-              description: p.description,
-            })
-          ),
-        }
+    const result =
+      await checkAISimilarity(
+        description,
+        allProjects
       );
 
-      const results =
-        response.data.results || [];
+    similarity = result.similarity;
 
-      for (let rec of results) {
-
-        const sim =
-          Number(rec.similarity);
-
-        if (sim > similarity) {
-
-          similarity = sim;
-
-          similarProject = rec;
-        }
-      }
-
-    } catch (err) {
-
-      console.log(
-        "AI ERROR:",
-        err.message
-      );
-    }
+    similarProject =
+      result.similarProject;
 
     // =====================
     // GET SIMILAR PROJECT DETAILS
     // =====================
-    let similarProjectDetails = null;
+    let similarProjectDetails =
+      null;
 
     if (similarProject) {
 
       similarProjectDetails =
+
         (await PreviousProject.findById(
           similarProject.id
         )) ||
@@ -315,9 +347,7 @@ exports.checkSimilarity = async (req, res) => {
   }
 };
 exports.addProject = async (req, res) => {
-
   try {
-
     // =====================
     // CHECK LOGIN USER
     // =====================
@@ -397,10 +427,7 @@ exports.addProject = async (req, res) => {
     // =====================
     // ONLY LEADER CAN SUBMIT
     // =====================
-    if (
-      team.leader_id.toString() !==
-      student._id.toString()
-    ) {
+    if (team.leader_id.toString() !== student._id.toString()) {
       return res.status(403).json({
         message: "Only leader can submit project",
       });
@@ -410,55 +437,50 @@ exports.addProject = async (req, res) => {
     // CHECK ACTIVE PROJECT
     // rejected projects allowed
     // =====================
-    const existingProject =
-      await CurrentProject.findOne({
+    const existingProject = await CurrentProject.findOne({
+      team_id: team._id,
 
-        team_id: team._id,
-
-        status: {
-          $ne: "rejected"
-        }
-      });
+      status: {
+        $ne: "rejected",
+      },
+    });
 
     if (existingProject) {
       return res.status(400).json({
-        message:
-          "Team already has an active project",
+        message: "Team already has an active project",
       });
     }
 
     // =====================
     // SAVE PROJECT
     // =====================
-    const savedProject =
-      await CurrentProject.create({
+    const savedProject = await CurrentProject.create({
+      // BASIC DATA
+      title,
+      description,
+      tools,
+      specialization,
 
-        // BASIC DATA
-        title,
-        description,
-        tools,
-        specialization,
+      // DOCTOR + TA
+      doctor_id,
+      ta_id,
 
-        // DOCTOR + TA
-        doctor_id,
-        ta_id,
+      // TEAM LINK
+      team_id: team._id,
 
-        // TEAM LINK
-        team_id: team._id,
+      // YEAR
+      year,
 
-        // YEAR
-        year,
+      // STATUS
+      status: "pending",
 
-        // STATUS
-        status: "pending",
+      doctor_status: "pending",
 
-        doctor_status: "pending",
+      ta_status: "pending",
 
-        ta_status: "pending",
-
-        // SIMILARITY
-        similarity_score,
-      });
+      // SIMILARITY
+      similarity_score,
+    });
 
     // =====================
     // LINK PROJECT TO TEAM
@@ -471,15 +493,11 @@ exports.addProject = async (req, res) => {
     // RESPONSE
     // =====================
     res.status(201).json({
-
-      message:
-        "Project submitted successfully",
+      message: "Project submitted successfully",
 
       savedProject,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
@@ -488,18 +506,7 @@ exports.addProject = async (req, res) => {
   }
 };
 exports.updateStatus = async (req, res) => {
-
-  // =====================
-  // CHECK ROLE
-  // =====================
-  if (req.user.role !== "doctor" && req.user.role !== "ta") {
-    return res.status(403).json({
-      message: "Only doctor or TA can update status",
-    });
-  }
-
   try {
-
     // =====================
     // GET STATUS
     // =====================
@@ -543,10 +550,7 @@ exports.updateStatus = async (req, res) => {
     // =====================
     // TA MUST WAIT FOR DOCTOR
     // =====================
-    if (
-      req.user.role === "ta" &&
-      project.doctor_status !== "approved"
-    ) {
+    if (req.user.role === "ta" && project.doctor_status !== "approved") {
       return res.status(403).json({
         message: "Doctor must approve first",
       });
@@ -555,10 +559,7 @@ exports.updateStatus = async (req, res) => {
     // =====================
     // DOCTOR ALREADY DECIDED
     // =====================
-    if (
-      req.user.role === "doctor" &&
-      project.doctor_status !== "pending"
-    ) {
+    if (req.user.role === "doctor" && project.doctor_status !== "pending") {
       return res.status(400).json({
         message: "Doctor already updated status",
       });
@@ -567,10 +568,7 @@ exports.updateStatus = async (req, res) => {
     // =====================
     // TA ALREADY DECIDED
     // =====================
-    if (
-      req.user.role === "ta" &&
-      project.ta_status !== "pending"
-    ) {
+    if (req.user.role === "ta" && project.ta_status !== "pending") {
       return res.status(400).json({
         message: "TA already updated status",
       });
@@ -591,7 +589,6 @@ exports.updateStatus = async (req, res) => {
     // DOCTOR REJECTS
     // =====================
     if (project.doctor_status === "rejected") {
-
       // FINAL STATUS
       project.status = "rejected";
 
@@ -625,9 +622,7 @@ exports.updateStatus = async (req, res) => {
 
       project,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
@@ -709,20 +704,6 @@ exports.finalizeProject = async (req, res) => {
 };
 exports.getDoctorDashboard = async (req, res) => {
   try {
-    // =====================
-    // CHECK ROLE
-    // =====================
-
-    if (req.user.role !== "doctor") {
-      return res.status(403).json({
-        message: "Only doctor",
-      });
-    }
-
-    // =====================
-    // GET DOCTOR DATA
-    // =====================
-
     const doctor = await User.findById(req.user.id).select("-password");
 
     // =====================
@@ -790,7 +771,6 @@ exports.getDoctorDashboard = async (req, res) => {
 };
 exports.getProjectDetails = async (req, res) => {
   try {
-
     const project = await CurrentProject.findById(req.params.id)
 
       .populate({
@@ -855,9 +835,7 @@ exports.getProjectDetails = async (req, res) => {
         ta: project.ta_id,
       },
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
@@ -952,24 +930,7 @@ exports.getStudentDashboard = async (req, res) => {
 };
 exports.getTADashboard = async (req, res) => {
   try {
-    // =====================
-    // CHECK ROLE
-    // =====================
-    if (req.user.role !== "ta") {
-      return res.status(403).json({
-        message: "Only TA",
-      });
-    }
-
-    // =====================
-    // GET TA DATA
-    // =====================
     const ta = await User.findById(req.user.id).select("-password");
-
-    // =====================
-    // GET PROJECTS
-    // الدكتور لازم يوافق الأول
-    // =====================
     const projects = await CurrentProject.find({
       ta_id: new mongoose.Types.ObjectId(req.user.id),
 
@@ -1152,18 +1113,7 @@ exports.changeTA = async (req, res) => {
   }
 };
 exports.getAdminDashboard = async (req, res) => {
-
   try {
-
-    // =====================
-    // CHECK ROLE
-    // =====================
-    if (req.user.role !== "admin") {
-      return res.status(403).json({
-        message: "Only admin",
-      });
-    }
-
     // =====================
     // GET PROJECTS
     // =====================
@@ -1192,38 +1142,29 @@ exports.getAdminDashboard = async (req, res) => {
     // approved but no code yet
     // =====================
     const projectsWithoutCode = projects.filter(
-      (p) =>
-        p.status === "approved" &&
-        !p.project_code
+      (p) => p.status === "approved" && !p.project_code,
     );
 
     // =====================
     // ONGOING PROJECTS
     // =====================
-    const ongoingProjects = projects.filter(
-      (p) => p.status === "ongoing"
-    );
+    const ongoingProjects = projects.filter((p) => p.status === "ongoing");
 
     // =====================
     // RESPONSE
     // =====================
     res.status(200).json({
-
       message: "Admin dashboard data",
 
-      projectsWithoutCodeCount:
-        projectsWithoutCode.length,
+      projectsWithoutCodeCount: projectsWithoutCode.length,
 
-      ongoingProjectsCount:
-        ongoingProjects.length,
+      ongoingProjectsCount: ongoingProjects.length,
 
       projectsWithoutCode,
 
       ongoingProjects,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
@@ -1232,18 +1173,7 @@ exports.getAdminDashboard = async (req, res) => {
   }
 };
 exports.adminApproveProject = async (req, res) => {
-
-  // =====================
-  // CHECK ROLE
-  // =====================
-  if (req.user.role !== "admin") {
-    return res.status(403).json({
-      message: "Only admin can approve project",
-    });
-  }
-
   try {
-
     // =====================
     // GET BODY
     // =====================
@@ -1314,9 +1244,7 @@ exports.adminApproveProject = async (req, res) => {
 
       project,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({

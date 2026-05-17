@@ -2,58 +2,7 @@ const Team = require("../models/team");
 const Student = require("../models/student");
 
 
-// =====================
-// CREATE TEAM
-// =====================
-exports.createTeam = async (req, res) => {
-  try {
-    const { name, leader_collegeCode } = req.body;
-
-    //  نجيب الطالب بالكود
-    const student = await Student.findOne({
-      collegeCode: Number(leader_collegeCode)
-    });
-
-    //  لو الطالب مش موجود
-    if (!student) {
-      return res.status(400).json({
-        message: "Invalid leader college code"
-      });
-    }
-
-    //  لو الطالب بالفعل في team
-    if (student.team_id) {
-      return res.status(400).json({
-        message: "Student already in a team"
-      });
-    }
-
-    // إنشاء التيم + إضافة الليدر كأول member
-    const team = await Team.create({
-      name,
-      leader_id: student._id,
-      members: [student._id]
-    });
-
-    //  ربط الطالب بالتيم
-    student.team_id = team._id;
-    student.isLeader = true;
-    await student.save();
-
-    //  response
-    res.status(201).json({
-      message: "Team created successfully",
-      team
-    });
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-
 // ADD MEMBER
-// =====================
 exports.addMember = async (req, res) => {
   try {
     const { team_id, student_collegeCode } = req.body;
@@ -130,11 +79,8 @@ exports.addMember = async (req, res) => {
   }
 };
 
-
-
-// =====================
 // TEAMS WITHOUT PROJECT
-// =====================
+
 exports.getTeamsWithoutProject = async (req, res) => {
   try {
     //  نجيب التيمات اللي معندهاش مشروع

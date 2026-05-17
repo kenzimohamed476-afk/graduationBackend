@@ -1,14 +1,9 @@
 const Idea = require("../models/idea");
 const CurrentProject = require("../models/currentProject");
 const PreviousProject = require("../models/previousProject");
-const axios = require("axios");
-// ==========================
-// RECOMMEND IDEAS
-// ==========================
+
 exports.recommendIdeas = async (req, res) => {
-
   try {
-
     // =====================
     // GET SPECIALIZATIONS
     // =====================
@@ -17,13 +12,9 @@ exports.recommendIdeas = async (req, res) => {
     // =====================
     // VALIDATION
     // =====================
-    if (
-      !specializations ||
-      specializations.length === 0
-    ) {
-
+    if (!specializations || specializations.length === 0) {
       return res.status(400).json({
-        message: "Specializations required"
+        message: "Specializations required",
       });
     }
 
@@ -36,91 +27,77 @@ exports.recommendIdeas = async (req, res) => {
     // AI RECOMMENDATION
     // =====================
     const response = await axios.post(
-
       "https://earnest-energy-production-aa56.up.railway.app/recommend",
 
       {
         student_specializations: specializations,
 
         ideas: ideas.map((idea) => ({
+          id: idea._id.toString(),
 
-      id: idea._id.toString(),
+          title: idea.title,
 
-      title: idea.title,
+          description: idea.description,
 
-      description: idea.description,
+          specialization: idea.specialization,
 
-      specialization: idea.specialization,
-
-      tools: idea.tools
-
-    }))}
+          tools: idea.tools,
+        })),
+      },
     );
 
     // =====================
     // GET AI RESULTS
     // =====================
-    const recommendations =
-      response.data.recommendations || [];
+    const recommendations = response.data.recommendations || [];
 
     // =====================
     // EXTRACT IDS
     // =====================
-    const recommendedIds =
-      recommendations.map((r) => r.id);
+    const recommendedIds = recommendations.map((r) => r.id);
 
     // =====================
     // GET MATCHED IDEAS
     // =====================
     const mongoose = require("mongoose");
 
-const objectIds = recommendedIds.map(
-  (id) => new mongoose.Types.ObjectId(id)
-);
+    const objectIds = recommendedIds.map(
+      (id) => new mongoose.Types.ObjectId(id),
+    );
 
-const recommendedIdeas = await Idea.find({
-  _id: { $in: objectIds }
-});
+    const recommendedIdeas = await Idea.find({
+      _id: { $in: objectIds },
+    });
 
     // =====================
     // SORT BY AI ORDER
     // =====================
-    const sortedIdeas =
-      recommendedIds.map((id) =>
-
-        recommendedIdeas.find(
-          (idea) =>
-            idea._id.toString() === id.toString()
-        )
-
-      ).filter(Boolean);
+    const sortedIdeas = recommendedIds
+      .map((id) =>
+        recommendedIdeas.find((idea) => idea._id.toString() === id.toString()),
+      )
+      .filter(Boolean);
 
     // =====================
     // RESPONSE
     // =====================
     res.status(200).json({
-
-      message:
-        "Ideas recommended successfully",
+      message: "Ideas recommended successfully",
 
       count: sortedIdeas.length,
 
-      ideas: sortedIdeas
+      ideas: sortedIdeas,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
 exports.selectIdea = async (req, res) => {
-
   try {
-
     // =====================
     // GET IDEA
     // =====================
@@ -128,7 +105,7 @@ exports.selectIdea = async (req, res) => {
 
     if (!idea) {
       return res.status(404).json({
-        message: "Idea not found"
+        message: "Idea not found",
       });
     }
 
@@ -136,7 +113,6 @@ exports.selectIdea = async (req, res) => {
     // CREATE CURRENT PROJECT
     // =====================
     const project = await CurrentProject.create({
-
       title: idea.title,
 
       description: idea.description,
@@ -149,7 +125,7 @@ exports.selectIdea = async (req, res) => {
 
       ta_id: idea.ta_id || null,
 
-      status: "pending"
+      status: "pending",
     });
 
     // =====================
@@ -161,50 +137,31 @@ exports.selectIdea = async (req, res) => {
     // RESPONSE
     // =====================
     res.status(201).json({
-
       message: "Idea selected successfully",
 
-      project
+      project,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
-// =====================================================
-// CHECK IDEA SIMILARITY
-// =====================================================
+
 exports.checkIdeaSimilarity = async (req, res) => {
-
   try {
-
-    // =====================
-    // CHECK ROLE
-    // =====================
+    
     if (req.user.role !== "doctor") {
       return res.status(403).json({
-        message: "Only doctor can add ideas"
+        message: "Only doctor can add ideas",
       });
     }
 
-    // =====================
-    // GET BODY
-    // =====================
-    const {
-      title,
-      description,
-      tools,
-      specialization
-    } = req.body;
+    const { title, description, tools, specialization } = req.body;
 
-    // =====================
-    // VALIDATION
-    // =====================
+  
     if (
       !title ||
       !description ||
@@ -212,292 +169,148 @@ exports.checkIdeaSimilarity = async (req, res) => {
       specialization.length === 0
     ) {
       return res.status(400).json({
-        message: "Missing required fields"
+        message: "Missing required fields",
       });
     }
 
-    // =====================
-    // DEFAULT VALUES
-    // =====================
     let similarity = 0;
 
     let similarProject = null;
 
-    // =====================
-    // GET PROJECTS
-    // =====================
-    const previousProjects =
-      await PreviousProject.find();
 
-    const currentProjects =
-      await CurrentProject.find();
+    const previousProjects = await PreviousProject.find();
 
-    // =====================
-    // MERGE PROJECTS
-    // =====================
-    const allProjects = [
+    const currentProjects = await CurrentProject.find();
 
-      ...previousProjects,
+    const allProjects = [...previousProjects, ...currentProjects].filter(
+      (p) => p.description,
+    );
 
-      ...currentProjects
+    const result = await checkAISimilarity(description, allProjects);
 
-    ].filter((p) => p.description);
+    similarity = result.similarity;
 
-    // =====================
-    // AI CHECK
-    // =====================
-    try {
+    similarProject = result.similarProject;
 
-      const response = await axios.post(
-
-        "https://earnest-energy-production-aa56.up.railway.app/check",
-
-        {
-          problem: description,
-
-          projects: allProjects.map(
-            (p) => ({
-              id: p._id.toString(),
-
-              description: p.description,
-            })
-          ),
-        }
-      );
-
-      const results =
-        response.data.results || [];
-
-      for (let rec of results) {
-
-        const sim =
-          Number(rec.similarity);
-
-        if (sim > similarity) {
-
-          similarity = sim;
-
-          similarProject = rec;
-        }
-      }
-
-    } catch (err) {
-
-      console.log(
-        "AI ERROR:",
-        err.message
-      );
-    }
-
-    // =====================
-    // RESPONSE
-    // =====================
     res.status(200).json({
-
       allowed: similarity < 80,
-
       similarity,
-
-      similarProject
+      similarProject,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
 
-// =====================================================
-// ADD IDEA
-// =====================================================
 exports.addIdea = async (req, res) => {
-
   try {
 
-    // =====================
-    // CHECK ROLE
-    // =====================
-    if (req.user.role !== "doctor") {
-      return res.status(403).json({
-        message: "Only doctor can add ideas"
-      });
-    }
+    const { title, description, specialization } = req.body;
 
-    // =====================
-    // GET BODY
-    // =====================
-    const {
-      title,
-      description,
-      specialization
-    } = req.body;
-
-    // =====================
-    // VALIDATION
-    // =====================
-    if (
-      !title ||
-      !description ||
-      !specialization
-    ) {
+    if (!title || !description || !specialization) {
       return res.status(400).json({
-        message: "Missing required fields"
+        message: "Missing required fields",
       });
     }
 
-    // =====================
-    // CREATE IDEA
-    // =====================
     const idea = await Idea.create({
-
       title,
 
       description,
 
       specialization,
 
-      doctor_id: req.user.id
+      doctor_id: req.user.id,
     });
 
-    // =====================
-    // RESPONSE
-    // =====================
     res.status(201).json({
+      message: "Idea added successfully",
 
-      message:
-        "Idea added successfully",
-
-      idea
+      idea,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
-// =====================================================
-// GET DOCTOR IDEAS
-// =====================================================
+
 exports.getMyIdeas = async (req, res) => {
-
   try {
-
-    // =====================
-    // CHECK ROLE
-    // =====================
     if (req.user.role !== "doctor") {
       return res.status(403).json({
-        message: "Only doctor"
+        message: "Only doctor",
       });
     }
 
-    // =====================
-    // GET IDEAS
-    // =====================
     const ideas = await Idea.find({
-
-      doctor_id: req.user.id
-
+      doctor_id: req.user.id,
     }).sort({
-
-      createdAt: -1
+      createdAt: -1,
     });
 
-    // =====================
-    // RESPONSE
-    // =====================
-    res.status(200).json({
 
+    res.status(200).json({
       message: "Doctor ideas",
 
       count: ideas.length,
 
-      ideas
+      ideas,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
-// =====================================================
-// DELETE IDEA
-// =====================================================
-exports.deleteIdea = async (req, res) => {
 
+exports.deleteIdea = async (req, res) => {
   try {
 
-    // =====================
-    // CHECK ROLE
-    // =====================
     if (req.user.role !== "doctor") {
       return res.status(403).json({
-        message: "Only doctor can delete ideas"
+        message: "Only doctor can delete ideas",
       });
     }
 
-    // =====================
-    // GET IDEA
-    // =====================
-    const idea = await Idea.findById(
-      req.params.id
-    );
+  
+    const idea = await Idea.findById(req.params.id);
 
     if (!idea) {
       return res.status(404).json({
-        message: "Idea not found"
+        message: "Idea not found",
       });
     }
 
-    // =====================
-    // CHECK OWNER
-    // =====================
-    if (
-      idea.doctor_id.toString() !==
-      req.user.id
-    ) {
+
+    if (idea.doctor_id.toString() !== req.user.id) {
       return res.status(403).json({
-        message:
-          "You can delete only your ideas"
+        message: "You can delete only your ideas",
       });
     }
 
-    // =====================
-    // DELETE IDEA
-    // =====================
-    await Idea.findByIdAndDelete(
-      req.params.id
-    );
 
-    // =====================
-    // RESPONSE
-    // =====================
+    await Idea.findByIdAndDelete(req.params.id);
+
+
     res.status(200).json({
-
       success: true,
 
-      message:
-        "Idea deleted successfully"
+      message: "Idea deleted successfully",
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };

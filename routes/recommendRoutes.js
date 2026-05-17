@@ -4,52 +4,18 @@ const router = express.Router();
 
 const auth = require("../middleware/auth");
 
-
 const recommendController = require("../controllers/recommendController");
 
-// ==========================
-// RECOMMEND IDEAS
-// ==========================
-router.post(
-  "/recommend-ideas",
-  recommendController.recommendIdeas
-);
-// =====================================================
-// CHECK IDEA SIMILARITY
-// =====================================================
-router.post(
-  "/check-idea-similarity",
-  auth,
-  recommendController.checkIdeaSimilarity
-);
+const allowRoles = require("../middleware/allowRoles");
 
-// ==========================
-// SELECT IDEA
-// ==========================
-router.put(
-  "/select-idea/:id",
-  auth,
-  recommendController.selectIdea
-);
-// =====================================================
-// ADD IDEA
-// =====================================================
-router.post(
-  "/add-idea",
-  auth,
-  recommendController.addIdea
-);
-// =====================================================
-// GET MY IDEAS
-// =====================================================
-router.get(
-  "/my-ideas",
-  auth,
-  recommendController.getMyIdeas
-);
-router.delete(
-  "/delete-idea/:id",
-  auth,
-  recommendController.deleteIdea
-);
+router.post("/recommend-ideas", recommendController.recommendIdeas);
+
+router.post("/check-idea-similarity",auth,recommendController.checkIdeaSimilarity,);
+
+router.put("/select-idea/:id", auth, recommendController.selectIdea);
+
+router.post("/add",verifyToken,allowRoles("doctor"),addIdea);
+
+router.get("/my-ideas", auth, recommendController.getMyIdeas);
+router.delete("/delete-idea/:id", auth, recommendController.deleteIdea);
 module.exports = router;
