@@ -1,46 +1,65 @@
 const axios = require("axios");
 
-exports.checkAISimilarity = async (description, projects) => {
-let similarity = 0;
+exports.checkAISimilarity =
+  async (description, allProjects) => {
 
-let similarProject = null;
+    let similarity = 0;
 
-try {
-    console.log(Projects);
-    console.log(description);
-    const response = await axios.post(
-    "https://ai-project-new-production.up.railway.app/check",
+    let similarProject = null;
 
-    {
-        problem: description,
+    try {
 
-        projects: projects.map((p) => ({
-        id: p._id.toString(),
+      console.log(allProjects);
 
-        description: p.description,
-        })),
-    },
-    );
+      console.log(description);
 
-    const results = response.data.results || [];
+      const response =
+        await axios.post(
 
-    for (let rec of results) {
-    const sim = Number(rec.similarity);
+          "https://ai-project-new-production.up.railway.app/check",
 
-    if (sim > similarity) {
-        similarity = sim;
+          {
+            problem: description,
 
-        similarProject = rec;
+            projects:
+              allProjects.map((p) => ({
+
+                id: p._id.toString(),
+
+                description:
+                  p.description,
+              })),
+          }
+        );
+
+      const results =
+        response.data.results || [];
+
+      for (let rec of results) {
+
+        const sim =
+          Number(rec.similarity);
+
+        if (sim > similarity) {
+
+          similarity = sim;
+
+          similarProject = rec;
+        }
+      }
+
+      console.log(response.data);
+
+    } catch (err) {
+
+      console.log(
+        "AI ERROR:",
+        err.message
+      );
     }
-    }
-    console.log(response.data);
-}
- catch (err) {
-    console.log("AI ERROR:", err.message);
-}
 
-return {
-    similarity,
-    similarProject,
-};
+    return {
+      similarity,
+      similarProject,
+    };
 };
