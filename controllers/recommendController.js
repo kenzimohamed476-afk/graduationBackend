@@ -27,7 +27,7 @@ exports.recommendIdeas = async (req, res) => {
     // AI RECOMMENDATION
     // =====================
     const response = await axios.post(
-      "https://earnest-energy-production-aa56.up.railway.app/recommend",
+      "https://ai-project-new-production.up.railway.app/recommend",
 
       {
         student_specializations: specializations,
