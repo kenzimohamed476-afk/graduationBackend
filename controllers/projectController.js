@@ -168,13 +168,6 @@ exports.checkSimilarity = async (req, res) => {
     // REMOVE CURRENT TEAM PROJECT
     // =====================
     const allProjects = [
-      ...previousProjects,
-
-      ...currentProjects.filter(
-        (p) =>
-          p.description && p.team_id?.toString() !== finalTeam?._id?.toString(),
-      ),
-    ];const allProjects = [
 
   ...previousProjects.filter(
     (p) => p.description
@@ -184,10 +177,9 @@ exports.checkSimilarity = async (req, res) => {
     (p) =>
       p.description &&
       p.team_id?.toString()
-      !== finalTeam?._id?.toString()
+      !== finalTeam?._id?.toString(),
   ),
 ];
-
     // =====================
     // AI CHECK
     // =====================
