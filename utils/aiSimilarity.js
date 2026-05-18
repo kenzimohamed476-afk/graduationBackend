@@ -6,6 +6,8 @@ let similarity = 0;
 let similarProject = null;
 
 try {
+    console.log(Projects);
+    console.log(description);
     const response = await axios.post(
     "https://ai-project-new-production.up.railway.app/check",
 
