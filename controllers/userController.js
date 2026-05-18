@@ -4,22 +4,21 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 exports.login = async (req, res) => {
   try {
-    const { email , password } = req.body;
+    const { email, password } = req.body;
 
-    
     if (!email || !password) {
       return res.status(400).json({
-        message: "email and password are required"
+        message: "email and password are required",
       });
     }
 
     const user = await User.findOne({
-      email: String(email)
+      email: String(email),
     });
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid email or password"
+        message: "Invalid email or password",
       });
     }
 
@@ -27,66 +26,58 @@ exports.login = async (req, res) => {
 
     if (!isMatch) {
       return res.status(401).json({
-        message: "Invalid email or password"
+        message: "Invalid email or password",
       });
     }
 
     const token = jwt.sign(
       {
         id: user._id,
-        role: user.role
+        role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
-  
     const userData = user.toObject();
     delete userData.password;
 
     res.json({
       message: "Login successful",
       token,
-      user: userData
+      user: userData,
     });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 exports.getDoctors = async (req, res) => {
   try {
-
     const doctors = await User.find({
-      role: "doctor"
-    }).select("name email specialization")
+      role: "doctor",
+    }).select("name email specialization");
 
     res.json({
-      doctors
+      doctors,
     });
-
   } catch (err) {
-
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
 exports.getTAs = async (req, res) => {
   try {
-
     const tas = await User.find({
-      role: "ta"
-    }).select("name email specialization")
+      role: "ta",
+    }).select("name email specialization");
 
     res.json({
-      tas
+      tas,
     });
-
   } catch (err) {
-
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };

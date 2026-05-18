@@ -8,8 +8,7 @@ const allowRoles = require("../middleware/allowRoles");
 
 const recommendController = require("../controllers/recommendController");
 
-// =====================
-// RECOMMEND IDEAS
+
 // =====================
 router.post("/recommend-ideas", recommendController.recommendIdeas);
 

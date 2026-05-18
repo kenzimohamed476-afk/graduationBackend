@@ -12,7 +12,7 @@ try {
     {
         problem: description,
 
-    projects: projects.map((p) => ({
+        projects: projects.map((p) => ({
         id: p._id.toString(),
 
         description: p.description,

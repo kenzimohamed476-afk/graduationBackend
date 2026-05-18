@@ -6,11 +6,9 @@ module.exports = (req, res, next) => {
 
     if (!authHeader) {
       return res.status(401).json({
-        message: "No token provided"
+        message: "No token provided",
       });
     }
-
-    // ✨ نشيل Bearer
     const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -18,10 +16,9 @@ module.exports = (req, res, next) => {
     req.user = decoded;
 
     next();
-
   } catch (err) {
     return res.status(401).json({
-      message: "Invalid token"
+      message: "Invalid token",
     });
   }
 };

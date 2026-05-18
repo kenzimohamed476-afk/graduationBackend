@@ -1,38 +1,28 @@
 const Team = require("../models/team");
 const Student = require("../models/student");
 
-
-// ADD MEMBER
 exports.addMember = async (req, res) => {
   try {
     const { team_id, student_collegeCode } = req.body;
 
-    // نجيب ID المستخدم الحالي من التوكن
-   const userId = req.user.id;
+    const userId = req.user.id;
 
-    // نجيب التيم الأول
+    
     const team = await Team.findById(team_id);
 
-    // لو التيم مش موجود
     if (!team) {
       return res.status(404).json({
         message: "Team not found"
       });
     }
-
-    //لو المستخدم مش الليدر
     if (team.leader_id.toString() !== userId) {
       return res.status(403).json({
         message: "Only leader can add members"
       });
     }
-
-    // نجيب الطالب بالكود
     const student = await Student.findOne({
       collegeCode: Number(student_collegeCode)
     });
-
-    //  لو الطالب مش موجود
     if (!student) {
       return res.status(400).json({
         message: "Invalid student college code"
@@ -78,8 +68,6 @@ exports.addMember = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-// TEAMS WITHOUT PROJECT
 
 exports.getTeamsWithoutProject = async (req, res) => {
   try {

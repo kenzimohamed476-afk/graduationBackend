@@ -6,150 +6,78 @@ const TimePlan = require("../models/timePlan");
 const User = require("../models/user");
 const mongoose = require("mongoose");
 const { checkAISimilarity } = require("../utils/aiSimilarity");
-
+const formatSpecialization = {
+  ai: "AI",
+  backend: "Backend",
+  frontend: "Frontend",
+  mobile: "Mobile",
+  iot: "IoT",
+  network: "Network",
+  "cyber security": "Cyber Security",
+};
 exports.checkSimilarity = async (req, res) => {
-
   try {
-
-    // =====================
-    // CHECK LOGIN USER
-    // =====================
-    const student = await Student.findById(
-      req.user.id
-    );
-
+    const student = await Student.findById(req.user.id);
     if (!student) {
       return res.status(404).json({
         message: "Student not found",
       });
     }
-
-    // =====================
-    // GET BODY
-    // =====================
-    const {
-      description,
-      team
-    } = req.body;
-
-    // =====================
-    // VALIDATION
-    // =====================
+    const { description, team } = req.body;
     if (!description || !team) {
-
       return res.status(400).json({
-        message:
-          "Description and team are required",
+        message: "Description and team are required",
       });
     }
-
-    // =====================
-    // VALIDATE LEADER
-    // =====================
     if (
-
       !team.members.some(
-
-        (m) =>
-
-          Number(m.collegeCode) ===
-          Number(team.leader_collegeCode)
+        (m) => Number(m.collegeCode) === Number(team.leader_collegeCode),
       )
     ) {
-
       return res.status(400).json({
-        message:
-          "Leader must be one of the team members",
+        message: "Leader must be one of the team members",
       });
     }
+    const codes = team.members.map((m) => Number(m.collegeCode));
 
-    // =====================
-    // REMOVE DUPLICATES
-    // =====================
-    const codes =
-      team.members.map(
-
-        (m) =>
-          Number(m.collegeCode)
-      );
-
-    if (
-      new Set(codes).size !==
-      codes.length
-    ) {
-
+    if (new Set(codes).size !== codes.length) {
       return res.status(400).json({
-        message:
-          "Duplicate members not allowed",
+        message: "Duplicate members not allowed",
       });
     }
+    const students = await Student.find({
+      collegeCode: {
+        $in: codes,
+      },
+    });
 
-    // =====================
-    // GET STUDENTS
-    // =====================
-    const students =
-      await Student.find({
-
-        collegeCode: {
-          $in: codes,
-        },
-      });
-
-    if (
-      students.length !==
-      codes.length
-    ) {
-
+    if (students.length !== codes.length) {
       return res.status(400).json({
-        message:
-          "One or more students not found",
+        message: "One or more students not found",
       });
     }
-
-    // =====================
-    // MAP IDS
-    // =====================
     const idMap = {};
 
     students.forEach((s) => {
       idMap[s.collegeCode] = s._id;
     });
 
-    const memberIds =
-      codes.map((c) => idMap[c]);
-
-    // =====================
-    // GET TEAM
-    // =====================
-    const currentTeam =
-      student.team_id
-
-        ? await Team.findById(
-            student.team_id
-          )
-
-        : null;
-
-    // =====================
-    // CHECK ACTIVE PROJECT
-    // =====================
+    const memberIds = codes.map((c) => idMap[c]);
+    const currentTeam = student.team_id
+      ? await Team.findById(student.team_id)
+      : null;
     if (currentTeam) {
+      const existingProject = await CurrentProject.findOne({
+        team_id: currentTeam._id,
 
-      const existingProject =
-        await CurrentProject.findOne({
-
-          team_id: currentTeam._id,
-
-          status: {
-            $ne: "rejected"
-          }
-        });
+        status: {
+          $ne: "rejected",
+        },
+      });
 
       if (existingProject) {
-
         return res.status(400).json({
-          message:
-            "Team already has an active project",
+          message: "Team already has an active project",
         });
       }
     }
@@ -158,28 +86,17 @@ exports.checkSimilarity = async (req, res) => {
     // MAX MEMBERS
     // =====================
     if (memberIds.length > 5) {
-
       return res.status(400).json({
-        message:
-          "Max 5 members allowed",
+        message: "Max 5 members allowed",
       });
     }
 
     // =====================
     // ONLY LEADER CAN CONTINUE
     // =====================
-    if (
-
-      Number(student.collegeCode) !==
-
-      Number(
-        team.leader_collegeCode
-      )
-    ) {
-
+    if (Number(student.collegeCode) !== Number(team.leader_collegeCode)) {
       return res.status(403).json({
-        message:
-          "Only the selected leader can continue",
+        message: "Only the selected leader can continue",
       });
     }
 
@@ -189,51 +106,33 @@ exports.checkSimilarity = async (req, res) => {
     let finalTeam = currentTeam;
 
     if (!finalTeam) {
+      finalTeam = await Team.create({
+        leader_id: idMap[team.leader_collegeCode],
 
-      finalTeam =
-        await Team.create({
-
-          leader_id:
-            idMap[
-              team.leader_collegeCode
-            ],
-
-          members: memberIds,
-        });
+        members: memberIds,
+      });
 
       // =====================
       // UPDATE STUDENTS
       // =====================
-      for (
-        let member of team.members
-      ) {
-
-        if (
-          !member.specialization
-        ) {
-
+      for (let member of team.members) {
+        if (!member.specialization.toUpperCase()) {
           return res.status(400).json({
-            message:
-              "Each member must have specialization",
+            message: "Each member must have specialization",
           });
         }
 
         await Student.findOneAndUpdate(
-
           {
-            collegeCode:
-              Number(
-                member.collegeCode
-              ),
+            collegeCode: Number(member.collegeCode),
           },
 
           {
-            team_id:
-              finalTeam._id,
+            team_id: finalTeam._id,
 
             specialization:
-              member.specialization,
-          }
+              formatSpecialization[member.specialization.toLowerCase()],
+          },
         );
       }
 
@@ -241,17 +140,13 @@ exports.checkSimilarity = async (req, res) => {
       // SET LEADER
       // =====================
       await Student.findOneAndUpdate(
-
         {
-          collegeCode:
-            Number(
-              team.leader_collegeCode
-            ),
+          collegeCode: Number(team.leader_collegeCode),
         },
 
         {
           isLeader: true,
-        }
+        },
       );
     }
 
@@ -265,80 +160,55 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // GET OLD PROJECTS
     // =====================
-    const previousProjects =
-      await PreviousProject.find();
+    const previousProjects = await PreviousProject.find();
 
-    const currentProjects =
-      await CurrentProject.find();
+    const currentProjects = await CurrentProject.find();
 
     // =====================
     // REMOVE CURRENT TEAM PROJECT
     // =====================
     const allProjects = [
-
       ...previousProjects,
 
       ...currentProjects.filter(
-
         (p) =>
-
-          p.description &&
-
-          p.team_id?.toString() !==
-          finalTeam?._id?.toString()
+          p.description && p.team_id?.toString() !== finalTeam?._id?.toString(),
       ),
     ];
 
     // =====================
     // AI CHECK
     // =====================
-    const result =
-      await checkAISimilarity(
-        description,
-        allProjects
-      );
+    const result = await checkAISimilarity(description, allProjects);
 
     similarity = result.similarity;
 
-    similarProject =
-      result.similarProject;
+    similarProject = result.similarProject;
 
     // =====================
     // GET SIMILAR PROJECT DETAILS
     // =====================
-    let similarProjectDetails =
-      null;
+    let similarProjectDetails = null;
 
     if (similarProject) {
-
       similarProjectDetails =
-
-        (await PreviousProject.findById(
-          similarProject.id
-        )) ||
-
-        (await CurrentProject.findById(
-          similarProject.id
-        ));
+        (await PreviousProject.findById(similarProject.id)) ||
+        (await CurrentProject.findById(similarProject.id));
     }
 
     // =====================
     // RESPONSE
     // =====================
     res.json({
-
       allowed: similarity < 80,
 
       similarity,
 
       team_id: finalTeam?._id,
 
-      similarProject:
-        similarProjectDetails,
+      similarProject: similarProjectDetails,
     });
-
   } catch (err) {
-
     console.log(err);
 
     res.status(500).json({
