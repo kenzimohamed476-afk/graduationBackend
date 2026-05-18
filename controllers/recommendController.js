@@ -1,7 +1,12 @@
 const Idea = require("../models/idea");
 const CurrentProject = require("../models/currentProject");
 const PreviousProject = require("../models/previousProject");
+
 const axios = require("axios");
+
+const {
+  checkAISimilarity
+} = require("../utils/aiSimilarity");
 
 exports.recommendIdeas = async (req, res) => {
   try {
