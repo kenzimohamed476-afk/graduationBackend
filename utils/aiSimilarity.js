@@ -7,7 +7,7 @@ let similarProject = null;
 
 try {
     const response = await axios.post(
-    "https://earnest-energy-production-aa56.up.railway.app/check",
+    "https://ai-project-new-production.up.railway.app/check",
 
     {
         problem: description,
@@ -31,7 +31,9 @@ try {
         similarProject = rec;
     }
     }
-} catch (err) {
+    console.log(response.data);
+}
+ catch (err) {
     console.log("AI ERROR:", err.message);
 }
 
