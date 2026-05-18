@@ -9,10 +9,6 @@ exports.checkAISimilarity =
 
     try {
 
-      console.log(allProjects);
-
-      console.log(description);
-
       const response =
         await axios.post(
 
