@@ -94,7 +94,7 @@ exports.saveFcmToken = async (req, res) => {
       });
     }
 
-    const user = await User.findByIdAndUpdate(
+    let account = await User.findByIdAndUpdate(
       req.user.id,
       {
         fcm_token: token,
@@ -104,10 +104,28 @@ exports.saveFcmToken = async (req, res) => {
       }
     );
 
+    if (!account) {
+      account = await Student.findByIdAndUpdate(
+        req.user.id,
+        {
+          fcm_token: token,
+        },
+        {
+          new: true,
+        }
+      );
+    }
+
+    if (!account) {
+      return res.status(404).json({
+        message: "Account not found",
+      });
+    }
+
     res.status(200).json({
       message: "FCM token saved successfully",
-      user,
     });
+
   } catch (err) {
     res.status(500).json({
       message: err.message,

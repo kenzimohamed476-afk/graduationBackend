@@ -6,6 +6,7 @@ const TimePlan = require("../models/timePlan");
 const User = require("../models/user");
 const mongoose = require("mongoose");
 const sendNotification = require("../utils/sendNotification");
+const sendPushNotification = require("../utils/sendPushNotification");
 const { checkAISimilarity } = require("../utils/aiSimilarity");
 const formatSpecialization = {
   ai: "AI",
@@ -1186,11 +1187,22 @@ exports.adminApproveProject = async (req, res) => {
     const team = await Team.findById(project.team_id);
 
 for (const memberId of team.members) {
+
   await sendNotification(
     memberId,
     "Project Approved",
     `Your project ${project.title} has been approved and assigned code ${project.project_code}`
   );
+
+  const student = await Student.findById(memberId);
+
+  if (student?.fcm_token) {
+    await sendPushNotification(
+      student.fcm_token,
+      "Project Approved",
+      `Your project ${project.title} has been approved and assigned code ${project.project_code}`
+    );
+  }
 }
 
     // =====================
