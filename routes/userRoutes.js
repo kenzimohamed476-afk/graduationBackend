@@ -8,6 +8,9 @@ const userController = require("../controllers/userController");
 
 const projectController = require("../controllers/projectController");
 
+const {
+  saveFcmToken,
+} = require("../controllers/userController");
 
 // login
 router.post("/login", userController.login);
@@ -20,5 +23,9 @@ router.get("/tas", userController.getTAs);
 
 // doctor dashboard
 router.get("/doctor/dashboard",auth,projectController.getDoctorDashboard);
-
+router.post(
+  "/fcm-token",
+  auth,
+  saveFcmToken
+);
 module.exports = router;
