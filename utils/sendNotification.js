@@ -1,5 +1,6 @@
 const Notification = require("../models/notification");
 const User = require("../models/user");
+const Student = require("../models/student");
 const sendPushNotification = require("./sendPushNotification");
 
 const sendNotification = async (
@@ -15,13 +16,18 @@ const sendNotification = async (
       message,
     });
 
-    // Get user
-    const user = await User.findById(user_id);
+    // Search in User collection
+    let account = await User.findById(user_id);
+
+    // If not found, search in Student collection
+    if (!account) {
+      account = await Student.findById(user_id);
+    }
 
     // Send push notification if token exists
-    if (user?.fcm_token) {
+    if (account?.fcm_token) {
       await sendPushNotification(
-        user.fcm_token,
+        account.fcm_token,
         title,
         message
       );
