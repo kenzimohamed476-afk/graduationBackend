@@ -13,7 +13,11 @@ router.get("/no-team",  auth, studentController.getStudentsWithoutTeam);
 
 // students without project
 router.get("/no-project",  auth, studentController.getStudentsWithoutProject);
-
+router.post(
+  "/fcm-token",
+  auth,
+  studentController.saveFcmToken
+);
 //router.get("/admin-dashboard", auth,  studentController.getAdminDashboard);
 
 router.get("/dashboard",auth,projectController.getStudentDashboard);
