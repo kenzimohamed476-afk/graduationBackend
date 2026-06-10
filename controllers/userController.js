@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendNotification = require("../utils/sendNotification");
 const PreviousProject = require("../models/previousProject");
-
+const CurrentProject = require("../models/currentProject");
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -88,15 +88,19 @@ exports.getTAs = async (req, res) => {
 
 exports.getLibraryDashboard = async (req, res) => {
   try {
+
+    if (req.user.role !== "library") {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
     const totalProjects =
       await PreviousProject.countDocuments();
 
-    const currentYear =
-      new Date().getFullYear().toString();
-
     const thisYearProjects =
-      await PreviousProject.countDocuments({
-        Year: currentYear,
+      await CurrentProject.countDocuments({
+        status: "ongoing",
       });
 
     res.status(200).json({
