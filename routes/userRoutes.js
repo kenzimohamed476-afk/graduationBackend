@@ -14,7 +14,7 @@ const {
 
 // login
 router.post("/login", userController.login);
-
+router.post("/add", userController.addUser);
 // get doctors
 router.get("/doctors", userController.getDoctors);
 
