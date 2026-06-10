@@ -8,13 +8,12 @@ const userController = require("../controllers/userController");
 
 const projectController = require("../controllers/projectController");
 
-const {
-  saveFcmToken,
-} = require("../controllers/userController");
+const {saveFcmToken,} = require("../controllers/userController");
+router.get("/library/dashboard",auth,userController.getLibraryDashboard);
 
 // login
 router.post("/login", userController.login);
-router.post("/add", userController.addUser);
+
 // get doctors
 router.get("/doctors", userController.getDoctors);
 

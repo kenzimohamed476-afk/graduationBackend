@@ -3,31 +3,7 @@ const userSchema = require("../validation/userValidation");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendNotification = require("../utils/sendNotification");
-
-exports.addUser = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role,
-    });
-
-    res.status(201).json({
-      message: "User created successfully",
-      user,
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
-  }
-};
+const PreviousProject = require("../models/previousProject");
 
 exports.login = async (req, res) => {
   try {
@@ -102,6 +78,32 @@ exports.getTAs = async (req, res) => {
     res.json({
       tas,
     });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+
+exports.getLibraryDashboard = async (req, res) => {
+  try {
+    const totalProjects =
+      await PreviousProject.countDocuments();
+
+    const currentYear =
+      new Date().getFullYear().toString();
+
+    const thisYearProjects =
+      await PreviousProject.countDocuments({
+        Year: currentYear,
+      });
+
+    res.status(200).json({
+      totalProjects,
+      thisYearProjects,
+    });
+
   } catch (err) {
     res.status(500).json({
       message: err.message,
