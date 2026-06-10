@@ -10,7 +10,6 @@ const projectController = require("../controllers/projectController");
 
 const {saveFcmToken,} = require("../controllers/userController");
 router.get("/library/dashboard",auth,userController.getLibraryDashboard);
-
 // login
 router.post("/login", userController.login);
 
