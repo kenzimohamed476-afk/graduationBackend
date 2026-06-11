@@ -18,7 +18,7 @@ router.post(
   userController.addPreviousProject
 );
 router.get(
-  "/library/old-projects",
+  "/library/projects",
   auth,
   userController.getAllPreviousProjects
 );
