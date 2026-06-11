@@ -17,6 +17,11 @@ router.post(
   auth,
   userController.addPreviousProject
 );
+router.get(
+  "/library/old-projects",
+  auth,
+  userController.getAllPreviousProjects
+);
 // get doctors
 router.get("/doctors", userController.getDoctors);
 

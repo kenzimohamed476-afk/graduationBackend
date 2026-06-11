@@ -177,6 +177,27 @@ exports.addPreviousProject = async (req, res) => {
     });
   }
 };
+exports.getAllPreviousProjects = async (req, res) => {
+  try {
+
+    if (req.user.role !== "library") {
+      return res.status(403).json({
+        message: "Access denied"
+      });
+    }
+
+    const projects = await PreviousProject.find();
+
+    res.status(200).json({
+      projects
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
 exports.saveFcmToken = async (req, res) => {
   try {
     const { token } = req.body;
