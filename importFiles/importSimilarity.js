@@ -29,7 +29,7 @@ fs.createReadStream(
   "./Similaritycheck.csv"
 )
 
-  .pipe(csv({ separator: ";" }))
+  .pipe(csv({ separator: "," }))
 
   .on("data", (data) => {
 

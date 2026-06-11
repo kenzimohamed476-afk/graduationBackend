@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const sendNotification = require("../utils/sendNotification");
 const PreviousProject = require("../models/previousProject");
 const CurrentProject = require("../models/currentProject");
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -54,6 +55,28 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+exports.getProfile = async (req, res) => {
+  try {
+
+    const user = await User.findById(req.user.id)
+      .select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    res.status(200).json({
+      user
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
 exports.getDoctors = async (req, res) => {
   try {
     const doctors = await User.find({
@@ -84,8 +107,6 @@ exports.getTAs = async (req, res) => {
     });
   }
 };
-
-
 exports.getLibraryDashboard = async (req, res) => {
   try {
 
@@ -198,6 +219,7 @@ exports.getAllPreviousProjects = async (req, res) => {
     });
   }
 };
+
 exports.saveFcmToken = async (req, res) => {
   try {
     const { token } = req.body;

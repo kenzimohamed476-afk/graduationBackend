@@ -22,6 +22,11 @@ router.get(
   auth,
   userController.getAllPreviousProjects
 );
+router.get(
+  "/profile",
+  auth,
+  userController.getProfile
+);
 // get doctors
 router.get("/doctors", userController.getDoctors);
 
