@@ -219,6 +219,93 @@ exports.getAllPreviousProjects = async (req, res) => {
     });
   }
 };
+exports.getCurrentProjectsForLibrary = async (req, res) => {
+  try {
+
+    if (req.user.role !== "library") {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
+    const projects = await CurrentProject.find({
+  status: "ongoing",
+}).populate("doctor_id", "name").populate("ta_id", "name");
+
+    res.status(200).json({
+      projects,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.submitProjectDocumentation = async (req, res) => {
+  try {
+
+    if (req.user.role !== "library") {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
+    const project = await CurrentProject.findById(req.params.id)
+      .populate("doctor_id", "name")
+      .populate("ta_id", "name")
+      .populate("team_id");
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    await PreviousProject.create({
+      project_code: project.project_code,
+      title: project.title,
+      description: project.description,
+
+      Specialization:
+        project.specialization.join(" , "),
+
+      Tools:
+        project.tools.join(" , "),
+
+      Doctor:
+        project.doctor_id?.name || "",
+
+      TA:
+        project.ta_id?.name || "",
+
+      Year:
+        project.year ||
+        new Date().getFullYear().toString(),
+
+      FutureWork:
+        project.FutureWork || "",
+
+      status: "finished",
+    });
+
+    await CurrentProject.findByIdAndDelete(
+      project._id
+    );
+
+    res.status(200).json({
+      message:
+        "Project moved to previous projects successfully",
+    });
+
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
 
 exports.saveFcmToken = async (req, res) => {
   try {

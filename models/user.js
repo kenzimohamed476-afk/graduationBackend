@@ -1,40 +1,42 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      trim: true,
+      required: true,
+    },
 
-  name: {
-    type: String,
-    required: true
+    email: {
+      type: String,
+      unique: true,
+      lowercase: true,
+      required: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+    },
+
+    role: {
+      type: String,
+      enum: ["doctor", "ta", "admin", "library"],
+      required: true,
+    },
+
+    specialization: {
+      type: String,
+    },
+
+    fcm_token: {
+      type: String,
+      default: null,
+    },
   },
 
-  specialization: {
-  type: String
-},
-
-  email: {
-    type: String,
-    unique: true,
-    required: true,
-  },
-
-  password: {
-    type: String,
-    required: true
-  },
-
-  role: {
-    type: String,
-    enum: ["doctor", "ta", "admin", "library"],
-    required: true
-  },
-  
-  fcm_token: {
-  type: String,
-  default: null
-}
-
-}, 
-// دي بتفول هو create امتي و update امتي auto
-{ timestamps: true });
+  { timestamps: true },
+);
 
 module.exports = mongoose.model("User", userSchema);

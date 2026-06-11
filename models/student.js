@@ -46,10 +46,11 @@ const studentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
     fcm_token: {
-  type: String,
-  default: null
-},
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true },
 );
