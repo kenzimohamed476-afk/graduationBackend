@@ -114,6 +114,69 @@ exports.getLibraryDashboard = async (req, res) => {
     });
   }
 };
+exports.addPreviousProject = async (req, res) => {
+  try {
+
+    if (req.user.role !== "library") {
+      return res.status(403).json({
+        message: "Access denied"
+      });
+    }
+
+    const {
+      project_code,
+      title,
+      description,
+      Specialization,
+      Tools,
+      Doctor,
+      TA,
+      Year,
+      FutureWork
+    } = req.body;
+
+    if (!project_code || !title || !Year) {
+      return res.status(400).json({
+        message: "Project code, title and year are required"
+      });
+    }
+
+    const existingProject = await PreviousProject.findOne({
+      project_code
+    });
+
+    if (existingProject) {
+      return res.status(400).json({
+        message: "Project code already exists"
+      });
+    }
+
+    const project = await PreviousProject.create({
+      project_code,
+      title,
+      description,
+      Specialization,
+      Tools,
+      Doctor,
+      TA,
+      Year,
+      FutureWork,
+      status: "finished"
+    });
+
+    res.status(201).json({
+      message: "Project added successfully",
+      project
+    });
+
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
 exports.saveFcmToken = async (req, res) => {
   try {
     const { token } = req.body;

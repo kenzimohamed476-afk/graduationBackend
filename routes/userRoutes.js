@@ -12,7 +12,11 @@ const {saveFcmToken,} = require("../controllers/userController");
 router.get("/library/dashboard",auth,userController.getLibraryDashboard);
 // login
 router.post("/login", userController.login);
-
+router.post(
+  "/library/old-project",
+  auth,
+  userController.addPreviousProject
+);
 // get doctors
 router.get("/doctors", userController.getDoctors);
 
