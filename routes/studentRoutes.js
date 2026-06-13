@@ -23,6 +23,10 @@ router.post(
 router.get("/dashboard",auth,projectController.getStudentDashboard);
 router.get("/profile",auth,studentController.getProfile);
 router.put("/profile",auth,studentController.updateProfile);
-
+router.get(
+  "/available",
+  auth,
+  studentController.getAvailableStudents
+);
 
 module.exports = router;

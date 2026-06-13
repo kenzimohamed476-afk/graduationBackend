@@ -226,3 +226,24 @@ exports.saveFcmToken = async (req, res) => {
     });
   }
 };
+exports.getAvailableStudents = async (req, res) => {
+  try {
+
+    const students = await Student.find({
+      team_id: null
+    }).select(
+      "name collegeCode phone specialization"
+    );
+
+    res.status(200).json({
+      students
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};

@@ -14,4 +14,9 @@ router.get(
   verifyToken,
   teamController.findTeams
 );
+router.get(
+  "/:id",
+  verifyToken,
+  teamController.getTeamDetails
+);
 module.exports = router;

@@ -70,36 +70,7 @@ exports.addMember = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-exports.findTeams = async (req, res) => {
-  try {
 
-    const teams = await Team.find({
-      project_id: { $ne: null }
-    })
-
-    .populate("leader_id", "name")
-
-    .populate({
-      path: "project_id",
-      select: "title description tools specialization"
-    });
-
-    const availableTeams = teams.filter(
-  team => (team.members.length + 1) < 5
-);
-
-    res.status(200).json({
-      teams: availableTeams
-    });
-
-  } catch (err) {
-
-    res.status(500).json({
-      message: err.message
-    });
-
-  }
-};
 
 exports.getTeamsWithoutProject = async (req, res) => {
   try {
