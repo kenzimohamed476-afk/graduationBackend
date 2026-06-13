@@ -325,14 +325,13 @@ exports.sendInvitation = async (req, res) => {
         message: "Student not found",
       });
     }
-    if (!sender.team_id) {
-      return res.status(400).json({
-        message: "You must have a team first",
-      });
-    }
 
     const receiver = await Student.findById(receiver_id);
-
+    if (sender._id.toString() === receiver._id.toString()) {
+      return res.status(400).json({
+        message: "You cannot send invitation to yourself",
+      });
+    }
     if (!receiver) {
       return res.status(404).json({
         message: "Receiver not found",
@@ -342,12 +341,9 @@ exports.sendInvitation = async (req, res) => {
     const existing = await TeamInvitation.findOne({
       sender_id: sender._id,
       receiver_id,
+      status: "pending",
     });
-    await sendNotification(
-      receiver._id,
-      "Team Invitation",
-      `${sender.name} invited you to join their team`,
-    );
+
     if (existing) {
       return res.status(400).json({
         message: "Invitation already sent",
@@ -358,6 +354,12 @@ exports.sendInvitation = async (req, res) => {
       sender_id: sender._id,
       receiver_id,
     });
+
+    await sendNotification(
+      receiver._id,
+      "New Team Invitation",
+      `${sender.name} invited you to join their team`,
+    );
 
     res.status(201).json({
       message: "Invitation sent",
@@ -403,10 +405,13 @@ exports.handleInvitation = async (req, res) => {
       });
     }
 
+    const receiver = await Student.findById(req.user.id);
+
     if (action === "reject") {
       invitation.status = "rejected";
 
       await invitation.save();
+
       await sendNotification(
         invitation.sender_id,
         "Invitation Rejected",
@@ -417,38 +422,6 @@ exports.handleInvitation = async (req, res) => {
         message: "Invitation rejected",
       });
     }
-
-    const sender = await Student.findById(invitation.sender_id);
-    const receiver = await Student.findById(req.user.id);
-
-    if (receiver.team_id) {
-      return res.status(400).json({
-        message: "You are already in a team",
-      });
-    }
-
-    if (!sender.team_id) {
-      return res.status(400).json({
-        message: "Sender has no team",
-      });
-    }
-
-    const team = await Team.findById(sender.team_id);
-
-    if (!team) {
-      return res.status(404).json({
-        message: "Team not found",
-      });
-    }
-
-    team.members.push(req.user.id);
-
-    await team.save();
-
-    await Student.findByIdAndUpdate(req.user.id, {
-      team_id: team._id,
-      lookingForTeam: false,
-    });
 
     invitation.status = "accepted";
 
