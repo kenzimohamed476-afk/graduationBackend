@@ -1,7 +1,7 @@
 const Team = require("../models/team");
 const Student = require("../models/student");
 const sendNotification = require("../utils/sendNotification");
-
+const JoinRequest = require("../models/joinRequest");
 
 exports.addMember = async (req, res) => {
   try {
@@ -70,10 +70,40 @@ exports.addMember = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+exports.findTeams = async (req, res) => {
+  try {
+
+    const teams = await Team.find({
+      project_id: { $ne: null }
+    })
+
+    .populate("leader_id", "name")
+
+    .populate({
+      path: "project_id",
+      select: "title description tools specialization"
+    });
+
+    const availableTeams = teams.filter(
+  team => (team.members.length + 1) < 5
+);
+
+    res.status(200).json({
+      teams: availableTeams
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};
 
 exports.getTeamsWithoutProject = async (req, res) => {
   try {
-    //  نجيب التيمات اللي معندهاش مشروع
+    
     const teams = await Team.find({  project_id: null })
       .populate("leader_id") // يجيب بيانات الليدر
       .populate("members");  // يجيب بيانات الأعضاء
@@ -84,11 +114,7 @@ exports.getTeamsWithoutProject = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-const JoinRequest = require("../models/joinRequest");
 
-// =====================
-// SEND JOIN REQUEST
-// =====================
 exports.sendJoinRequest = async (req, res) => {
   try {
     const { team_id } = req.body;
@@ -202,22 +228,9 @@ exports.handleRequest = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-// =====================================================
-// LEAVE TEAM
-// =====================================================
-// =====================================================
-// LEAVE TEAM
-// =====================================================
-// =====================================================
-// LEAVE TEAM
-// =====================================================
 exports.leaveTeam = async (req, res) => {
 
   try {
-
-    // =====================
-    // GET STUDENT
-    // =====================
     const student = await Student.findById(
       req.user.id
     );
@@ -228,18 +241,13 @@ exports.leaveTeam = async (req, res) => {
       });
     }
 
-    // =====================
-    // CHECK TEAM
-    // =====================
     if (!student.team_id) {
       return res.status(400).json({
         message: "Student is not in a team"
       });
     }
 
-    // =====================
-    // GET TEAM
-    // =====================
+  
     const team = await Team.findById(
       student.team_id
     );

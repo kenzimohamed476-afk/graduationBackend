@@ -25,11 +25,9 @@ const recommendRoutes = require("./routes/recommendRoutes");
 
 const notificationRoutes = require("./routes/notificationRoutes");
 
-app.use("/api/notifications",notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/projects", projectRoutes);
-
 app.use("/api/teams", teamRoutes);
-
 app.use("/api/users", userRoutes);
 
 app.use("/api/students", studentRoutes);

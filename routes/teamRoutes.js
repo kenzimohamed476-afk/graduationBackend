@@ -9,4 +9,9 @@ router.get("/no-project", verifyToken, teamController.getTeamsWithoutProject);
 router.post("/join-request", verifyToken, teamController.sendJoinRequest);
 router.get("/requests", verifyToken, teamController.getTeamRequests);
 router.post("/handle-request", verifyToken, teamController.handleRequest);
+router.get(
+  "/find-teams",
+  verifyToken,
+  teamController.findTeams
+);
 module.exports = router;
