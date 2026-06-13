@@ -33,19 +33,22 @@ router.patch(
 );
 router.post(
   "/send-invitation",
-  verifyToken,
+    auth,
+
   studentController.sendInvitation
 );
 
 router.get(
   "/invitations",
-  verifyToken,
+  auth,
+
   studentController.getInvitations
 );
 
 router.post(
   "/handle-invitation",
-  verifyToken,
+   auth,
+
   studentController.handleInvitation
 );
 
