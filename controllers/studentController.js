@@ -1,14 +1,17 @@
 const Student = require("../models/student");
+
 const Team = require("../models/team");
+
 const studentSchema = require("../validation/studentValidation");
+
 const bcrypt = require("bcrypt");
+
 const jwt = require("jsonwebtoken");
+
 const sendNotification = require("../utils/sendNotification");
 
+const TeamInvitation = require("../models/teamInvitation");
 
-// =====================
-// REGISTER STUDENT
-// =====================
 exports.addStudent = async (req, res) => {
   try {
     // ✅ Validation
@@ -55,9 +58,6 @@ exports.addStudent = async (req, res) => {
   }
 };
 
-// =====================
-// LOGIN STUDENT
-// =====================
 exports.login = async (req, res) => {
   try {
     const { collegeCode, password } = req.body;
@@ -113,9 +113,6 @@ exports.login = async (req, res) => {
   }
 };
 
-// =====================
-// STUDENTS WITHOUT TEAM
-// =====================
 exports.getStudentsWithoutTeam = async (req, res) => {
   try {
     const students = await Student.find({ team_id: null });
@@ -125,9 +122,6 @@ exports.getStudentsWithoutTeam = async (req, res) => {
   }
 };
 
-// =====================
-// STUDENTS WITHOUT PROJECT
-// =====================
 exports.getStudentsWithoutProject = async (req, res) => {
   try {
     const teams = await Team.find({ project_code: null });
@@ -142,10 +136,6 @@ exports.getStudentsWithoutProject = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-// =====================
-// ADMIN DASHBOARD
-// =====================
 
 exports.getProfile = async (req, res) => {
   try {
@@ -168,6 +158,7 @@ exports.getProfile = async (req, res) => {
     });
   }
 };
+
 exports.updateProfile = async (req, res) => {
   try {
     const { name, phone, specialization } = req.body;
@@ -196,6 +187,7 @@ exports.updateProfile = async (req, res) => {
     });
   }
 };
+
 exports.saveFcmToken = async (req, res) => {
   try {
     const { token } = req.body;
@@ -226,6 +218,7 @@ exports.saveFcmToken = async (req, res) => {
     });
   }
 };
+
 exports.enableLookingForTeam = async (req, res) => {
   try {
 
@@ -258,6 +251,7 @@ exports.enableLookingForTeam = async (req, res) => {
 
   }
 };
+
 exports.getAvailableStudents = async (req, res) => {
   try {
 
@@ -280,6 +274,7 @@ exports.getAvailableStudents = async (req, res) => {
 
   }
 };
+
 exports.sendInvitation = async (req, res) => {
   try {
     const { receiver_id } = req.body;
@@ -337,6 +332,7 @@ exports.sendInvitation = async (req, res) => {
     });
   }
 };
+
 exports.getInvitations = async (req, res) => {
   try {
     const invitations = await TeamInvitation.find({
@@ -353,6 +349,7 @@ exports.getInvitations = async (req, res) => {
     });
   }
 };
+
 exports.handleInvitation = async (req, res) => {
   try {
     const { invitation_id, action } = req.body;
