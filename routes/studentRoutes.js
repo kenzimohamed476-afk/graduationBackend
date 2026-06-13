@@ -30,5 +30,10 @@ router.post("/send-invitation",auth,studentController.sendInvitation,);
 router.get("/invitations",auth,studentController.getInvitations,);
 
 router.post("/handle-invitation",auth,studentController.handleInvitation,);
+router.patch(
+  "/stop-looking-for-team",
+  auth,
+  studentController.disableLookingForTeam
+);
 
 module.exports = router;

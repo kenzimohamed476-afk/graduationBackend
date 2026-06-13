@@ -1,16 +1,10 @@
 const Student = require("../models/student");
-
 const Team = require("../models/team");
-
-const studentSchema = require("../validation/studentValidation");
-
-const bcrypt = require("bcrypt");
-
-const jwt = require("jsonwebtoken");
-
-const sendNotification = require("../utils/sendNotification");
-
 const TeamInvitation = require("../models/teamInvitation");
+const studentSchema = require("../validation/studentValidation");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const sendNotification = require("../utils/sendNotification");
 
 exports.addStudent = async (req, res) => {
   try {
@@ -241,6 +235,35 @@ exports.enableLookingForTeam = async (req, res) => {
     res.status(200).json({
       message: "You are now available for teams",
       student
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};
+exports.disableLookingForTeam = async (req, res) => {
+  try {
+
+    const student = await Student.findById(
+      req.user.id
+    );
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found"
+      });
+    }
+
+    student.lookingForTeam = false;
+
+    await student.save();
+
+    res.status(200).json({
+      message: "Removed from available students"
     });
 
   } catch (err) {
