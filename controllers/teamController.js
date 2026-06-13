@@ -2,6 +2,7 @@ const Team = require("../models/team");
 const Student = require("../models/student");
 const sendNotification = require("../utils/sendNotification");
 const JoinRequest = require("../models/joinRequest");
+const TeamInvitation = require("../models/teamInvitation");
 
 exports.addMember = async (req, res) => {
   try {
@@ -358,5 +359,169 @@ exports.leaveTeam = async (req, res) => {
     res.status(500).json({
       message: err.message
     });
+  }
+};
+exports.sendInvitation = async (req, res) => {
+  try {
+
+    const { receiver_id } = req.body;
+
+    const sender = await Student.findById(
+      req.user.id
+    );
+
+    if (!sender) {
+      return res.status(404).json({
+        message: "Student not found"
+      });
+    }
+
+    const receiver =
+      await Student.findById(receiver_id);
+
+    if (!receiver) {
+      return res.status(404).json({
+        message: "Receiver not found"
+      });
+    }
+
+    const existing =
+      await TeamInvitation.findOne({
+        sender_id: sender._id,
+        receiver_id
+      });
+
+    if (existing) {
+      return res.status(400).json({
+        message: "Invitation already sent"
+      });
+    }
+
+    const invitation =
+      await TeamInvitation.create({
+        sender_id: sender._id,
+        receiver_id
+      });
+
+    res.status(201).json({
+      message: "Invitation sent",
+      invitation
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};
+exports.getInvitations = async (req, res) => {
+  try {
+
+    const invitations =
+      await TeamInvitation.find({
+        receiver_id: req.user.id,
+        status: "pending"
+      })
+      .populate(
+        "sender_id",
+        "name collegeCode specialization phone"
+      );
+
+    res.status(200).json({
+      invitations
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};
+exports.handleInvitation = async (req, res) => {
+  try {
+
+    const { invitation_id, action } = req.body;
+
+    const invitation =
+      await TeamInvitation.findById(
+        invitation_id
+      );
+
+    if (!invitation) {
+      return res.status(404).json({
+        message: "Invitation not found"
+      });
+    }
+
+    if (
+      invitation.receiver_id.toString() !==
+      req.user.id
+    ) {
+      return res.status(403).json({
+        message: "Access denied"
+      });
+    }
+
+    if (action === "reject") {
+
+      invitation.status = "rejected";
+
+      await invitation.save();
+
+      return res.status(200).json({
+        message: "Invitation rejected"
+      });
+    }
+
+    const sender = await Student.findById(
+      invitation.sender_id
+    );
+
+    if (!sender.team_id) {
+      return res.status(400).json({
+        message: "Sender has no team"
+      });
+    }
+
+    const team = await Team.findById(
+      sender.team_id
+    );
+
+    if (!team) {
+      return res.status(404).json({
+        message: "Team not found"
+      });
+    }
+
+    team.members.push(req.user.id);
+
+    await team.save();
+
+    await Student.findByIdAndUpdate(
+      req.user.id,
+      {
+        team_id: team._id,
+        lookingForTeam: false
+      }
+    );
+
+    invitation.status = "accepted";
+
+    await invitation.save();
+
+    res.status(200).json({
+      message: "Invitation accepted"
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
   }
 };

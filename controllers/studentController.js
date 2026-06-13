@@ -262,9 +262,10 @@ exports.getAvailableStudents = async (req, res) => {
   try {
 
     const students = await Student.find({
+      lookingForTeam: true,
       team_id: null
     }).select(
-      "name collegeCode phone specialization"
+      "name phone collegeCode specialization"
     );
 
     res.status(200).json({
