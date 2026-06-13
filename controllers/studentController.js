@@ -280,3 +280,131 @@ exports.getAvailableStudents = async (req, res) => {
 
   }
 };
+exports.sendInvitation = async (req, res) => {
+  try {
+    const { receiver_id } = req.body;
+
+    const sender = await Student.findById(req.user.id);
+
+    if (!sender) {
+      return res.status(404).json({
+        message: "Student not found",
+      });
+    }
+
+    const receiver = await Student.findById(receiver_id);
+    if (sender._id.toString() === receiver._id.toString()) {
+      return res.status(400).json({
+        message: "You cannot send invitation to yourself",
+      });
+    }
+    if (!receiver) {
+      return res.status(404).json({
+        message: "Receiver not found",
+      });
+    }
+
+    const existing = await TeamInvitation.findOne({
+      sender_id: sender._id,
+      receiver_id,
+      status: "pending",
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        message: "Invitation already sent",
+      });
+    }
+
+    const invitation = await TeamInvitation.create({
+      sender_id: sender._id,
+      receiver_id,
+    });
+
+    await sendNotification(
+      receiver._id,
+      "New Team Invitation",
+      `${sender.name} invited you to join their team`,
+    );
+
+    res.status(201).json({
+      message: "Invitation sent",
+      invitation,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.getInvitations = async (req, res) => {
+  try {
+    const invitations = await TeamInvitation.find({
+      receiver_id: req.user.id,
+      status: "pending",
+    }).populate("sender_id", "name collegeCode specialization phone");
+
+    res.status(200).json({
+      invitations,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.handleInvitation = async (req, res) => {
+  try {
+    const { invitation_id, action } = req.body;
+
+    const invitation = await TeamInvitation.findById(invitation_id);
+
+    if (!invitation) {
+      return res.status(404).json({
+        message: "Invitation not found",
+      });
+    }
+
+    if (invitation.receiver_id.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
+    const receiver = await Student.findById(req.user.id);
+
+    if (action === "reject") {
+      invitation.status = "rejected";
+
+      await invitation.save();
+
+      await sendNotification(
+        invitation.sender_id,
+        "Invitation Rejected",
+        `${receiver.name} rejected your invitation`,
+      );
+
+      return res.status(200).json({
+        message: "Invitation rejected",
+      });
+    }
+
+    invitation.status = "accepted";
+
+    await invitation.save();
+
+    await sendNotification(
+      invitation.sender_id,
+      "Invitation Accepted",
+      `${receiver.name} accepted your invitation`,
+    );
+
+    res.status(200).json({
+      message: "Invitation accepted",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};

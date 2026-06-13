@@ -18,8 +18,6 @@ router.post(
   auth,
   studentController.saveFcmToken
 );
-//router.get("/admin-dashboard", auth,  studentController.getAdminDashboard);
-
 router.get("/dashboard",auth,projectController.getStudentDashboard);
 router.get("/profile",auth,studentController.getProfile);
 router.put("/profile",auth,studentController.updateProfile);
@@ -32,6 +30,23 @@ router.patch(
   "/looking-for-team",
   auth,
   studentController.enableLookingForTeam
+);
+router.post(
+  "/send-invitation",
+  verifyToken,
+  studentController.sendInvitation
+);
+
+router.get(
+  "/invitations",
+  verifyToken,
+  studentController.getInvitations
+);
+
+router.post(
+  "/handle-invitation",
+  verifyToken,
+  studentController.handleInvitation
 );
 
 module.exports = router;
