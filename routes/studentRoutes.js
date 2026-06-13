@@ -28,5 +28,10 @@ router.get(
   auth,
   studentController.getAvailableStudents
 );
+router.patch(
+  "/looking-for-team",
+  auth,
+  studentController.enableLookingForTeam
+);
 
 module.exports = router;

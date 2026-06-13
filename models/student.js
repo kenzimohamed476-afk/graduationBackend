@@ -51,6 +51,11 @@ const studentSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    
+    lookingForTeam: {
+  type: Boolean,
+  default: false,
+}
   },
   { timestamps: true },
 );

@@ -226,6 +226,38 @@ exports.saveFcmToken = async (req, res) => {
     });
   }
 };
+exports.enableLookingForTeam = async (req, res) => {
+  try {
+
+    const { specialization } = req.body;
+
+    const student = await Student.findById(req.user.id);
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found"
+      });
+    }
+
+    student.specialization = specialization;
+
+    student.lookingForTeam = true;
+
+    await student.save();
+
+    res.status(200).json({
+      message: "You are now available for teams",
+      student
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};
 exports.getAvailableStudents = async (req, res) => {
   try {
 
