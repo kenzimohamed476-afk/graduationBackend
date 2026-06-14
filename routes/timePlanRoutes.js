@@ -39,4 +39,10 @@ router.put(
   timePlanController.editByDoctor
 );
 
+router.get(
+  "/project/:projectId",
+  auth,
+  timePlanController.getTimePlan
+); 
+
 module.exports = router;

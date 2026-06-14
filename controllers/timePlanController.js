@@ -49,6 +49,28 @@ exports.addTimePlan = async (req, res) => {
   }
 };
 
+exports.getTimePlan = async (req, res) => {
+  try {
+    const plan = await TimePlan.findOne({
+      project_id: req.params.projectId,
+    });
+
+    if (!plan) {
+      return res.status(404).json({
+        message: "Time plan not found",
+      });
+    }
+
+    res.status(200).json({
+      plan,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
 exports.editByTA = async (req, res) => {
   try {
     if (req.user.role !== "ta") {
