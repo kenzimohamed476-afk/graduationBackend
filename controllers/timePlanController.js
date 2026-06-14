@@ -259,3 +259,37 @@ exports.rejectByDoctor = async (req, res) => {
     });
   }
 };
+exports.addTaskToTimePlan = async (req, res) => {
+  try {
+
+    const { title, description, deadline } = req.body;
+
+    const plan = await TimePlan.findById(req.params.id);
+
+    if (!plan) {
+      return res.status(404).json({
+        message: "Time plan not found"
+      });
+    }
+
+    plan.tasks.push({
+      title,
+      description,
+      deadline
+    });
+
+    await plan.save();
+
+    res.status(200).json({
+      message: "Task added successfully",
+      plan
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};

@@ -58,3 +58,8 @@ router.put(
   auth,
   timePlanController.updateTimePlan
 ); 
+router.put(
+  "/add-task/:id",
+  auth,
+  timePlanController.addTaskToTimePlan
+);
