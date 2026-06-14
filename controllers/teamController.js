@@ -80,6 +80,7 @@ exports.getTeamsWithoutProject = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 exports.leaveTeam = async (req, res) => {
   try {
     const student = await Student.findById(req.user.id);
