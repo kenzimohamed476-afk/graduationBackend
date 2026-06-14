@@ -16,18 +16,6 @@ router.get(
   getNotifications
 );
 
-// Get unread notifications count
-router.get(
-  "/unread-count",
-  auth,
-  getUnreadCount
-);
 
-// Mark notification as read
-router.patch(
-  "/:id/read",
-  auth,
-  markAsRead
-);
 
 module.exports = router;
