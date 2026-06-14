@@ -4,9 +4,7 @@ const CurrentProject = require("../models/currentProject");
 const Notification = require("../models/notification");
 const sendNotification = require("../utils/sendNotification");
 
-// =====================
-// ADD REPORT (Leader only)
-// =====================
+
 exports.addReport = async (req, res) => {
   try {
 
@@ -37,9 +35,8 @@ exports.addReport = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-// =====================
-// ADD COMMENT BY DOCTOR
-// =====================
+
+
 exports.addDoctorComment = async (req, res) => {
   try {
     if (req.user.role !== "doctor") {

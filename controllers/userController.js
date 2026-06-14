@@ -157,7 +157,7 @@ exports.addPreviousProject = async (req, res) => {
       futureWork,
     } = req.body;
 
-    if (!project_code || !title || !Year) {
+    if (!project_code || !title || !year) {
       return res.status(400).json({
         message: "Project code, title and year are required",
       });
@@ -267,17 +267,12 @@ exports.submitProjectDocumentation = async (req, res) => {
       title: project.title,
       description: project.description,
 
-      Specialization: project.specialization.join(" , "),
-
-      Tools: project.tools.join(" , "),
-
-      Doctor: project.doctor_id?.name || "",
-
-      TA: project.ta_id?.name || "",
-
-      Year: project.year || new Date().getFullYear().toString(),
-
-      FutureWork: project.FutureWork || "",
+      specialization: project.specialization,
+      tools: project.tools,
+      doctor: project.doctor_id?.name || "",
+      ta: project.ta_id?.name || "",
+      year: project.year || new Date().getFullYear().toString(),
+      futureWork: project.futureWork || "",
 
       status: "finished",
     });

@@ -11,12 +11,6 @@ router.post(
   timePlanController.addTimePlan
 );
 
-// TA edit
-router.put(
-  "/ta-edit/:id",
-  auth,
-  timePlanController.editByTA
-);
 
 // TA approve
 router.put(
@@ -25,6 +19,13 @@ router.put(
   timePlanController.approveByTA
 );
 
+router.put(
+  "/reject-ta/:id",
+  auth,
+  timePlanController.rejectByTA
+); 
+module.exports = router;
+
 // Doctor view plans
 router.get(
   "/doctor",
@@ -32,12 +33,19 @@ router.get(
   timePlanController.getPlansForDoctor
 );
 
-// Doctor edit
+
+
 router.put(
-  "/doctor-edit/:id",
+  "/approve-doctor/:id",
   auth,
-  timePlanController.editByDoctor
+  timePlanController.approveByDoctor
 );
+
+router.put(
+  "/reject-doctor/:id",
+  auth,
+  timePlanController.rejectByDoctor
+); 
 
 router.get(
   "/project/:projectId",
@@ -45,4 +53,8 @@ router.get(
   timePlanController.getTimePlan
 ); 
 
-module.exports = router;
+router.put(
+  "/update/:id",
+  auth,
+  timePlanController.updateTimePlan
+); 

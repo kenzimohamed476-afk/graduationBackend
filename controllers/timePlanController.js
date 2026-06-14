@@ -71,57 +71,6 @@ exports.getTimePlan = async (req, res) => {
   }
 };
 
-exports.editByTA = async (req, res) => {
-  try {
-    if (req.user.role !== "ta") {
-      return res.status(403).json({
-        message: "Only TA can edit",
-      });
-    }
-
-    const plan = await TimePlan.findById(req.params.id);
-
-    if (!plan) {
-      return res.status(404).json({
-        message: "Time plan not found",
-      });
-    }
-
-    const updatedPlan = await TimePlan.findByIdAndUpdate(
-      req.params.id,
-      {
-        tasks: req.body.tasks,
-        status: "edited_by_ta",
-      },
-      { new: true },
-    );
-
-    const team = await Team.findById(plan.team_id).populate("members");
-
-    const users = [
-      ...new Set([
-        plan.leader_id.toString(),
-        ...team.members.map((m) => m._id.toString()),
-      ]),
-    ];
-
-    for (let user of users) {
-      await sendNotification(
-        user,
-        "Time Plan Updated",
-        "TA updated your time plan, please review it",
-      );
-    }
-
-    res.json({
-      message: "TA updated the plan",
-      updatedPlan,
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
 exports.approveByTA = async (req, res) => {
   try {
     if (req.user.role !== "ta") {
@@ -191,14 +140,37 @@ exports.getPlansForDoctor = async (req, res) => {
   }
 };
 
-exports.editByDoctor = async (req, res) => {
+exports.rejectByTA = async (req, res) => {
   try {
-    if (req.user.role !== "doctor") {
-      return res.status(403).json({
-        message: "Only doctor",
+    const { comment } = req.body;
+
+    if (!comment) {
+      return res.status(400).json({
+        message: "Comment is required",
       });
     }
 
+    const plan = await TimePlan.findByIdAndUpdate(
+      req.params.id,
+      {
+        status: "rejected",
+        ta_comment: comment,
+      },
+      { new: true },
+    );
+
+    res.status(200).json({
+      message: "Time plan rejected",
+      plan,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.updateTimePlan = async (req, res) => {
+  try {
     const plan = await TimePlan.findById(req.params.id);
 
     if (!plan) {
@@ -207,41 +179,83 @@ exports.editByDoctor = async (req, res) => {
       });
     }
 
-    if (plan.status !== "pending_doctor") {
-      return res.status(400).json({
-        message: "Plan must be approved by TA first",
+    // صاحب الخطة فقط
+    if (plan.created_by.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Access denied",
       });
     }
 
-    const updatedPlan = await TimePlan.findByIdAndUpdate(
+    plan.tasks = req.body.tasks;
+
+    plan.status = "pending_ta";
+
+    plan.ta_comment = "";
+    plan.doctor_comment = "";
+    await plan.save();
+
+    res.status(200).json({
+      message: "Time plan updated successfully",
+      plan,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.approveByDoctor = async (req, res) => {
+  try {
+    const plan = await TimePlan.findByIdAndUpdate(
       req.params.id,
       {
-        tasks: req.body.tasks,
+        status: "approved",
       },
       { new: true },
     );
 
-    const team = await Team.findById(plan.team_id).populate("members");
-
-    const users = [
-      ...new Set([
-        plan.leader_id.toString(),
-        ...team.members.map((m) => m._id.toString()),
-      ]),
-    ];
-
-    for (let user of users) {
-      await sendNotification(
-        user,
-        "Time Plan Updated",
-        "Doctor updated your time plan",
-      );
+    if (!plan) {
+      return res.status(404).json({
+        message: "Time plan not found",
+      });
     }
-    res.json({
-      message: "Doctor updated the plan",
-      updatedPlan,
+
+    res.status(200).json({
+      message: "Time plan approved by doctor",
+      plan,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+exports.rejectByDoctor = async (req, res) => {
+  try {
+    const { comment } = req.body;
+
+    if (!comment) {
+      return res.status(400).json({
+        message: "Comment is required",
+      });
+    }
+
+    const plan = await TimePlan.findByIdAndUpdate(
+      req.params.id,
+      {
+        status: "rejected",
+        doctor_comment: comment,
+      },
+      { new: true },
+    );
+
+    res.status(200).json({
+      message: "Time plan rejected by doctor",
+      plan,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
   }
 };

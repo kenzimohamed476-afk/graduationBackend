@@ -50,7 +50,6 @@ const timePlanSchema = new mongoose.Schema(
       type: String,
       enum: [
         "pending_ta",
-        "edited_by_ta",
         "pending_doctor",
         "approved",
         "rejected",
