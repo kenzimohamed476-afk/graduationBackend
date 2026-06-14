@@ -358,21 +358,28 @@ exports.sendInvitation = async (req, res) => {
 
 exports.getInvitations = async (req, res) => {
   try {
+
     const invitations = await TeamInvitation.find({
       receiver_id: req.user.id,
-      status: "pending",
-    }).populate("sender_id", "name collegeCode specialization phone");
+    })
+    .populate(
+      "sender_id",
+      "name collegeCode specialization phone"
+    )
+    .sort({ createdAt: -1 });
 
     res.status(200).json({
       invitations,
     });
+
   } catch (err) {
+
     res.status(500).json({
       message: err.message,
     });
+
   }
 };
-
 exports.handleInvitation = async (req, res) => {
   try {
     const { invitation_id, action } = req.body;
