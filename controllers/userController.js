@@ -1,9 +1,13 @@
 const User = require("../models/user");
-const userSchema = require("../validation/userValidation");
+
+const Student = require("../models/student");
+
 const bcrypt = require("bcrypt");
+
 const jwt = require("jsonwebtoken");
-const sendNotification = require("../utils/sendNotification");
+
 const PreviousProject = require("../models/previousProject");
+
 const CurrentProject = require("../models/currentProject");
 
 exports.login = async (req, res) => {
@@ -55,28 +59,27 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 exports.getProfile = async (req, res) => {
   try {
-
-    const user = await User.findById(req.user.id)
-      .select("-password");
+    const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     res.status(200).json({
-      user
+      user,
     });
-
   } catch (err) {
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
+
 exports.getDoctors = async (req, res) => {
   try {
     const doctors = await User.find({
@@ -92,6 +95,7 @@ exports.getDoctors = async (req, res) => {
     });
   }
 };
+
 exports.getTAs = async (req, res) => {
   try {
     const tas = await User.find({
@@ -107,40 +111,37 @@ exports.getTAs = async (req, res) => {
     });
   }
 };
+
 exports.getLibraryDashboard = async (req, res) => {
   try {
-
     if (req.user.role !== "library") {
       return res.status(403).json({
         message: "Access denied",
       });
     }
 
-    const totalProjects =
-      await PreviousProject.countDocuments();
+    const totalProjects = await PreviousProject.countDocuments();
 
-    const thisYearProjects =
-      await CurrentProject.countDocuments({
-        status: "ongoing",
-      });
+    const thisYearProjects = await CurrentProject.countDocuments({
+      status: "ongoing",
+    });
 
     res.status(200).json({
       totalProjects,
       thisYearProjects,
     });
-
   } catch (err) {
     res.status(500).json({
       message: err.message,
     });
   }
 };
+
 exports.addPreviousProject = async (req, res) => {
   try {
-
     if (req.user.role !== "library") {
       return res.status(403).json({
-        message: "Access denied"
+        message: "Access denied",
       });
     }
 
@@ -148,27 +149,27 @@ exports.addPreviousProject = async (req, res) => {
       project_code,
       title,
       description,
-      Specialization,
-      Tools,
-      Doctor,
-      TA,
-      Year,
-      FutureWork
+      specialization,
+      tools,
+      doctor,
+      ta,
+      year,
+      futureWork,
     } = req.body;
 
     if (!project_code || !title || !Year) {
       return res.status(400).json({
-        message: "Project code, title and year are required"
+        message: "Project code, title and year are required",
       });
     }
 
     const existingProject = await PreviousProject.findOne({
-      project_code
+      project_code,
     });
 
     if (existingProject) {
       return res.status(400).json({
-        message: "Project code already exists"
+        message: "Project code already exists",
       });
     }
 
@@ -176,52 +177,50 @@ exports.addPreviousProject = async (req, res) => {
       project_code,
       title,
       description,
-      Specialization,
-      Tools,
-      Doctor,
-      TA,
-      Year,
-      FutureWork,
-      status: "finished"
+      specialization,
+      tools,
+      doctor,
+      ta,
+      year,
+      futureWork,
+      status: "finished",
     });
 
     res.status(201).json({
       message: "Project added successfully",
-      project
+      project,
     });
-
   } catch (err) {
     console.log(err);
 
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
+
 exports.getAllPreviousProjects = async (req, res) => {
   try {
-
     if (req.user.role !== "library") {
       return res.status(403).json({
-        message: "Access denied"
+        message: "Access denied",
       });
     }
 
     const projects = await PreviousProject.find();
 
     res.status(200).json({
-      projects
+      projects,
     });
-
   } catch (err) {
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
   }
 };
+
 exports.getCurrentProjectsForLibrary = async (req, res) => {
   try {
-
     if (req.user.role !== "library") {
       return res.status(403).json({
         message: "Access denied",
@@ -229,22 +228,23 @@ exports.getCurrentProjectsForLibrary = async (req, res) => {
     }
 
     const projects = await CurrentProject.find({
-  status: "ongoing",
-}).populate("doctor_id", "name").populate("ta_id", "name");
+      status: "ongoing",
+    })
+      .populate("doctor_id", "name")
+      .populate("ta_id", "name");
 
     res.status(200).json({
       projects,
     });
-
   } catch (err) {
     res.status(500).json({
       message: err.message,
     });
   }
 };
+
 exports.submitProjectDocumentation = async (req, res) => {
   try {
-
     if (req.user.role !== "library") {
       return res.status(403).json({
         message: "Access denied",
@@ -267,37 +267,26 @@ exports.submitProjectDocumentation = async (req, res) => {
       title: project.title,
       description: project.description,
 
-      Specialization:
-        project.specialization.join(" , "),
+      Specialization: project.specialization.join(" , "),
 
-      Tools:
-        project.tools.join(" , "),
+      Tools: project.tools.join(" , "),
 
-      Doctor:
-        project.doctor_id?.name || "",
+      Doctor: project.doctor_id?.name || "",
 
-      TA:
-        project.ta_id?.name || "",
+      TA: project.ta_id?.name || "",
 
-      Year:
-        project.year ||
-        new Date().getFullYear().toString(),
+      Year: project.year || new Date().getFullYear().toString(),
 
-      FutureWork:
-        project.FutureWork || "",
+      FutureWork: project.FutureWork || "",
 
       status: "finished",
     });
 
-    await CurrentProject.findByIdAndDelete(
-      project._id
-    );
+    await CurrentProject.findByIdAndDelete(project._id);
 
     res.status(200).json({
-      message:
-        "Project moved to previous projects successfully",
+      message: "Project moved to previous projects successfully",
     });
-
   } catch (err) {
     console.log(err);
 
@@ -324,7 +313,7 @@ exports.saveFcmToken = async (req, res) => {
       },
       {
         new: true,
-      }
+      },
     );
 
     if (!account) {
@@ -335,7 +324,7 @@ exports.saveFcmToken = async (req, res) => {
         },
         {
           new: true,
-        }
+        },
       );
     }
 
@@ -348,7 +337,6 @@ exports.saveFcmToken = async (req, res) => {
     res.status(200).json({
       message: "FCM token saved successfully",
     });
-
   } catch (err) {
     res.status(500).json({
       message: err.message,

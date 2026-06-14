@@ -1,4 +1,4 @@
-const Idea = require("../models/idea");
+const Idea = require("../models/RecommendedIdea");
 const CurrentProject = require("../models/currentProject");
 const PreviousProject = require("../models/previousProject");
 const sendNotification = require("../utils/sendNotification");

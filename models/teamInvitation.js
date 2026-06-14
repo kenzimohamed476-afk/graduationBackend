@@ -20,10 +20,7 @@ const teamInvitationSchema = new mongoose.Schema(
       default: "pending",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports = mongoose.model(
-  "TeamInvitation",
-  teamInvitationSchema
-);
+module.exports = mongoose.model("TeamInvitation", teamInvitationSchema);

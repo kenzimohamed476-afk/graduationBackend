@@ -10,6 +10,7 @@ const studentSchema = new mongoose.Schema(
     phone: {
       type: String,
       unique: true,
+      required: true,
     },
 
     password: {
@@ -51,11 +52,11 @@ const studentSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    
+
     lookingForTeam: {
-  type: Boolean,
-  default: false,
-}
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

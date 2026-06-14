@@ -63,10 +63,11 @@ const currentProjectSchema = new mongoose.Schema(
 
     project_code: {
       type: String,
+      unique: true,
       sparse: true,
     },
 
-    FutureWork: {
+    futureWork: {
       type: String,
       default: null,
     },

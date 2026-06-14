@@ -3,15 +3,11 @@ const User = require("../models/user");
 const Student = require("../models/student");
 const sendPushNotification = require("./sendPushNotification");
 
-const sendNotification = async (
-  user_id,
-  title,
-  message
-) => {
+const sendNotification = async (user_id, title, message) => {
   try {
     // Save notification in database
     await Notification.create({
-      user_id,
+      receiver_id: user_id,
       title,
       message,
     });
@@ -26,11 +22,7 @@ const sendNotification = async (
 
     // Send push notification if token exists
     if (account?.fcm_token) {
-      await sendPushNotification(
-        account.fcm_token,
-        title,
-        message
-      );
+      await sendPushNotification(account.fcm_token, title, message);
     }
   } catch (err) {
     console.log(err);

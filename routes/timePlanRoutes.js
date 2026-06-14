@@ -4,11 +4,44 @@ const router = express.Router();
 const timePlanController = require("../controllers/timePlanController");
 const auth = require("../middleware/auth");
 
-// add time plan
-router.post("/add", auth, timePlanController.addTimePlan);
-router.put("/approve/:id", auth, timePlanController.approveByTA);
-router.get("/doctor", auth, timePlanController.getPlansForDoctor);
-router.put("/doctor-edit/:id", auth, timePlanController.editByDoctor);
-router.put("/ta-edit/:id", auth, timePlanController.editByTA);
+router.post(
+  "/add",
+  auth,
+  timePlanController.addTimePlan
+);
 
-module.exports = router;
+router.get(
+  "/project/:projectId",
+  auth,
+  timePlanController.getTimePlan
+);
+
+router.put(
+  "/approve-ta/:id",
+  auth,
+  timePlanController.approveByTA
+);
+
+router.put(
+  "/approve-doctor/:id",
+  auth,
+  timePlanController.approveByDoctor
+);
+
+router.put(
+  "/reject/:id",
+  auth,
+  timePlanController.rejectPlan
+);
+
+router.put(
+  "/ta-edit/:id",
+  auth,
+  timePlanController.editByTA
+);
+
+router.put(
+  "/doctor-edit/:id",
+  auth,
+  timePlanController.editByDoctor
+);;
