@@ -1,7 +1,6 @@
 const Team = require("../models/team");
 const Student = require("../models/student");
 const sendNotification = require("../utils/sendNotification");
-const JoinRequest = require("../models/joinRequest");
 const TeamInvitation = require("../models/teamInvitation");
 
 exports.addMember = async (req, res) => {
