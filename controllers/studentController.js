@@ -8,7 +8,7 @@ const sendNotification = require("../utils/sendNotification");
 
 exports.addStudent = async (req, res) => {
   try {
-    // ✅ Validation
+  
     const { error } = studentSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -16,7 +16,7 @@ exports.addStudent = async (req, res) => {
       });
     }
 
-    // ✅ Check duplicate
+  
     const existingStudent = await Student.findOne({
       collegeCode: Number(req.body.collegeCode),
     });
@@ -26,21 +26,30 @@ exports.addStudent = async (req, res) => {
         message: "Student already exists",
       });
     }
+    const existingEmail = await Student.findOne({
+      email: req.body.email,
+    });
 
-    // ✅ Hash password
+    if (existingEmail) {
+      return res.status(400).json({
+        message: "Email already exists",
+      });
+    }
+
+    
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-    // ✅ Create student
     const student = await Student.create({
       name: req.body.name,
-      email:req.body.email,
+      email: req.body.email,
       phone: req.body.phone,
+      email: req.body.email,
       collegeCode: Number(req.body.collegeCode),
       password: hashedPassword,
       isLeader: false,
     });
 
-    //  Remove password
+ 
     const studentData = student.toObject();
     delete studentData.password;
 
@@ -200,7 +209,7 @@ exports.saveFcmToken = async (req, res) => {
       },
       {
         new: true,
-      }
+      },
     );
 
     res.status(200).json({
@@ -216,14 +225,13 @@ exports.saveFcmToken = async (req, res) => {
 
 exports.enableLookingForTeam = async (req, res) => {
   try {
-
     const { specialization } = req.body;
 
     const student = await Student.findById(req.user.id);
 
     if (!student) {
       return res.status(404).json({
-        message: "Student not found"
+        message: "Student not found",
       });
     }
 
@@ -235,27 +243,21 @@ exports.enableLookingForTeam = async (req, res) => {
 
     res.status(200).json({
       message: "You are now available for teams",
-      student
+      student,
     });
-
   } catch (err) {
-
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
-
   }
 };
 exports.disableLookingForTeam = async (req, res) => {
   try {
-
-    const student = await Student.findById(
-      req.user.id
-    );
+    const student = await Student.findById(req.user.id);
 
     if (!student) {
       return res.status(404).json({
-        message: "Student not found"
+        message: "Student not found",
       });
     }
 
@@ -264,38 +266,29 @@ exports.disableLookingForTeam = async (req, res) => {
     await student.save();
 
     res.status(200).json({
-      message: "Removed from available students"
+      message: "Removed from available students",
     });
-
   } catch (err) {
-
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
-
   }
 };
 
 exports.getAvailableStudents = async (req, res) => {
   try {
-
     const students = await Student.find({
       lookingForTeam: true,
-      team_id: null
-    }).select(
-      "name phone collegeCode specialization"
-    );
+      team_id: null,
+    }).select("name phone collegeCode specialization");
 
     res.status(200).json({
-      students
+      students,
     });
-
   } catch (err) {
-
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
-
   }
 };
 
@@ -359,26 +352,19 @@ exports.sendInvitation = async (req, res) => {
 
 exports.getInvitations = async (req, res) => {
   try {
-
     const invitations = await TeamInvitation.find({
       receiver_id: req.user.id,
     })
-    .populate(
-      "sender_id",
-      "name collegeCode specialization phone"
-    )
-    .sort({ createdAt: -1 });
+      .populate("sender_id", "name collegeCode specialization phone")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       invitations,
     });
-
   } catch (err) {
-
     res.status(500).json({
       message: err.message,
     });
-
   }
 };
 exports.handleInvitation = async (req, res) => {
