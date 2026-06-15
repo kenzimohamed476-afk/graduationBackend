@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const fs = require("fs");
 const csv = require("csv-parser");
 
-const Idea = require("../models/idea");
+const Idea = require("../models/recommendedIdea");
 
 mongoose.connect(
   "mongodb+srv://kenzimohamed476_db_user:8MB7kGdwRRvOHrgW@cluster0.xqkrcxg.mongodb.net/graduation_project?retryWrites=true&w=majority&appName=Cluster0"

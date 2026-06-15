@@ -608,8 +608,11 @@ exports.sendDocumentationReminder = async (req, res) => {
   try {
 
     const projects = await CurrentProject.find({
-      documentation: null
+      documentation: null,
+      documentation_deadline: { $ne: null }
     });
+
+    let count = 0;
 
     for (const project of projects) {
 
@@ -631,10 +634,13 @@ exports.sendDocumentationReminder = async (req, res) => {
         );
 
       }
+
+      count++;
     }
 
     res.status(200).json({
-      message: "Notifications sent successfully"
+      message: "Documentation reminders sent successfully",
+      count
     });
 
   } catch (err) {
