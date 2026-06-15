@@ -33,6 +33,7 @@ exports.addStudent = async (req, res) => {
     // ✅ Create student
     const student = await Student.create({
       name: req.body.name,
+      email:req.body.email,
       phone: req.body.phone,
       collegeCode: Number(req.body.collegeCode),
       password: hashedPassword,
