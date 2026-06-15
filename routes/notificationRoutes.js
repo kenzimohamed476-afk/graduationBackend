@@ -6,6 +6,12 @@ const auth = require("../middleware/auth");
 
 const { getNotifications } = require("../controllers/notificationsController");
 
+router.post(
+  "/chat",
+  auth,
+  sendChatNotification
+);
+
 router.get("/", auth, getNotifications);
 
 module.exports = router;
