@@ -73,6 +73,16 @@ const currentProjectSchema = new mongoose.Schema(
     },
 
     year: String,
+
+    documentation: {
+  type: String,
+  default: null,
+},
+
+documentation_deadline: {
+  type: Date,
+  default: null,
+},
   },
   { timestamps: true },
 );

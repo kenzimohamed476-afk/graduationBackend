@@ -604,6 +604,69 @@ exports.uploadDocumentation = async (req, res) => {
     });
   }
 };
+exports.checkLateDocumentation = async () => {
+  try {
+
+    const projects = await CurrentProject.find({
+      documentation_deadline: {
+        $lt: new Date()
+      },
+      documentation: null
+    });
+
+    for (const project of projects) {
+
+      const team = await Team.findById(project.team_id);
+
+      for (const memberId of team.members) {
+
+        await sendNotification(
+          memberId,
+          "Documentation Deadline Missed",
+          `Documentation for ${project.title} was not submitted on time`
+        );
+
+      }
+    }
+
+  } catch (err) {
+    console.log(err);
+  }
+};
+exports.setDocumentationDeadline = async (req, res) => {
+  try {
+
+    const { deadline } = req.body;
+
+    const project = await CurrentProject.findByIdAndUpdate(
+      req.params.id,
+      {
+        documentation_deadline: deadline
+      },
+      {
+        new: true
+      }
+    );
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Documentation deadline set successfully",
+      project
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};
 exports.finalizeProject = async (req, res) => {
   try {
     const project = await CurrentProject.findById(req.params.id);
