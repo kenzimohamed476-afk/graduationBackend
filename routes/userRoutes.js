@@ -34,4 +34,12 @@ router.get(
   auth,
   userController.getCurrentProjectsForLibrary,
 );
+
+router.post(
+  "/add",
+  auth,
+  allowRoles("manager"),
+  userController.addUser
+);
+
 module.exports = router;

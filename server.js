@@ -1,10 +1,13 @@
 const express = require("express");
+
 const mongoose = require("mongoose");
+
 const cors = require("cors");
 
 require("dotenv").config();
 
 const app = express();
+
 app.use(cors());
 
 app.use(express.json());
@@ -24,12 +27,14 @@ const recommendRoutes = require("./routes/recommendRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 
 app.use("/api/notifications", notificationRoutes);
+
 app.use("/api/projects", projectRoutes);
+
 app.use("/api/teams", teamRoutes);
+
 app.use("/api/users", userRoutes);
 
 app.use("/api/students", studentRoutes);
-
 
 app.use("/api/timeplans", timePlanRoutes);
 

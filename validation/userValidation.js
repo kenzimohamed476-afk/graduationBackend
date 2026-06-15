@@ -20,7 +20,8 @@ const userSchema = Joi.object({
       "doctor",
       "ta",
       "admin",
-      "library"
+      "library",
+      "manager"
     )
     .required()
 
