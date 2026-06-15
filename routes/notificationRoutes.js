@@ -4,7 +4,10 @@ const router = express.Router();
 
 const auth = require("../middleware/auth");
 
-const { getNotifications } = require("../controllers/notificationsController");
+const {
+  getNotifications,
+  sendChatNotification,
+} = require("../controllers/notificationsController");
 
 router.post(
   "/chat",
