@@ -604,6 +604,47 @@ exports.uploadDocumentation = async (req, res) => {
     });
   }
 };
+exports.sendDocumentationReminder = async (req, res) => {
+  try {
+
+    const projects = await CurrentProject.find({
+      documentation: null
+    });
+
+    for (const project of projects) {
+
+      const team = await Team.findById(project.team_id);
+
+      if (!team) continue;
+
+      const members = [
+        team.leader_id,
+        ...team.members
+      ];
+
+      for (const memberId of members) {
+
+        await sendNotification(
+          memberId,
+          "Documentation Reminder",
+          "Please submit your documentation before the deadline"
+        );
+
+      }
+    }
+
+    res.status(200).json({
+      message: "Notifications sent successfully"
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message
+    });
+
+  }
+};
 exports.finalizeProject = async (req, res) => {
   try {
     const project = await CurrentProject.findById(req.params.id);

@@ -32,4 +32,10 @@ router.put("/finalize/:id", auth, projectController.finalizeProject);
 
 router.get("/:id", auth, projectController.getProjectDetails);
 
+router.post(
+  "/send-documentation-reminder",
+  auth,
+  allowRoles("manager", "librarian"),
+  projectController.sendDocumentationReminder
+); 
 module.exports = router;
