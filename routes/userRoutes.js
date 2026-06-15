@@ -38,7 +38,6 @@ router.get(
 router.post(
   "/add",
   auth,
-  allowRoles("manager"),
   userController.addUser
 );
 
