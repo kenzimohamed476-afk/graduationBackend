@@ -111,6 +111,24 @@ exports.leaveTeam = async (req, res) => {
     if (team.leader_id.toString() === student._id.toString()) {
       const { new_leader_id } = req.body;
 
+      // Check if there's only 1 member left (will be 0 after leader leaves)
+      // In this case, delete the team
+      if (team.members.length < 2) {
+        // Delete the team
+        await Team.findByIdAndDelete(student.team_id);
+
+        // remove old leader from team
+        student.team_id = null;
+        student.isLeader = false;
+
+        await student.save();
+
+        return res.status(200).json({
+          success: true,
+          message: "Team disbanded due to insufficient members",
+        });
+      }
+
       if (!new_leader_id) {
         return res.status(400).json({
           message: "Leader must choose new leader",
@@ -178,6 +196,33 @@ exports.leaveTeam = async (req, res) => {
     team.members = team.members.filter(
       (memberId) => memberId.toString() !== student._id.toString()
     );
+
+    // Check if team will have minimum 2 members (leader + at least 1 member)
+    // If only leader remains, delete the team
+    if (team.members.length < 1) {
+      // Delete the team (only leader left)
+      await Team.findByIdAndDelete(team._id);
+
+      // Update leader to remove team_id
+      await Student.findByIdAndUpdate(
+        team.leader_id,
+        {
+          team_id: null,
+          isLeader: false,
+        }
+      );
+
+      // Remove team from current student
+      student.team_id = null;
+      student.isLeader = false;
+
+      await student.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Team disbanded due to insufficient members",
+      });
+    }
 
     await team.save();
 
