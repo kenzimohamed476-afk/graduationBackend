@@ -17,8 +17,6 @@ const userRoutes = require("./routes/userRoutes");
 
 const studentRoutes = require("./routes/studentRoutes");
 
-const reportRoutes = require("./routes/reportRoutes");
-
 const timePlanRoutes = require("./routes/timePlanRoutes");
 
 const recommendRoutes = require("./routes/recommendRoutes");
