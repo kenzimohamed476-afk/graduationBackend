@@ -34,11 +34,6 @@ router.get(
   auth,
   userController.getCurrentProjectsForLibrary,
 );
-
-router.post(
-  "/add",
-  auth,
-  userController.addUser
-);
+router.post("/add", userController.addUser);
 
 module.exports = router;
