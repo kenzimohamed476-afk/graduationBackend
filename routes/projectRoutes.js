@@ -32,10 +32,4 @@ router.put("/finalize/:id", auth, projectController.finalizeProject);
 
 router.get("/:id", auth, projectController.getProjectDetails);
 
-router.put(
-  "/documentation-deadline/:id",
-  auth,
-  allowRoles("doctor"),
-  projectController.setDocumentationDeadline
-);
 module.exports = router;
