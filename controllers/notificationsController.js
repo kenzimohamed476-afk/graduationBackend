@@ -1,4 +1,7 @@
 const Notification = require("../models/notification");
+const Student = require("../models/student");
+const User = require("../models/user");
+const admin = require("../config/firebase");
 
 exports.getNotifications = async (req, res) => {
   try {
