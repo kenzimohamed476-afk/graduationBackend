@@ -111,23 +111,20 @@ exports.leaveTeam = async (req, res) => {
     if (team.leader_id.toString() === student._id.toString()) {
       const { new_leader_id } = req.body;
 
-      // لازم يختار ليدر جديد
       if (!new_leader_id) {
         return res.status(400).json({
           message: "Leader must choose new leader",
         });
       }
 
-      // مينفعش يختار نفسه
       if (new_leader_id === student._id.toString()) {
         return res.status(400).json({
           message: "Invalid new leader",
         });
       }
 
-      // نتأكد إنه member
       const isMember = team.members.some(
-        (memberId) => memberId.toString() === new_leader_id,
+        (memberId) => memberId.toString() === new_leader_id
       );
 
       if (!isMember) {
@@ -138,7 +135,7 @@ exports.leaveTeam = async (req, res) => {
 
       // remove old leader
       team.members = team.members.filter(
-        (memberId) => memberId.toString() !== student._id.toString(),
+        (memberId) => memberId.toString() !== student._id.toString()
       );
 
       // set new leader
@@ -146,25 +143,31 @@ exports.leaveTeam = async (req, res) => {
 
       await team.save();
 
-      // update new leader
+      // notify remaining members
+      for (const memberId of team.members) {
+        await sendNotification(
+          memberId,
+          "Member Left Team",
+          `${student.name} left the team`
+        );
+      }
+
+      // make new leader
       await Student.findByIdAndUpdate(
         new_leader_id,
-
         {
           isLeader: true,
-        },
+        }
       );
 
-      // remove old leader team
+      // remove old leader from team
       student.team_id = null;
-
       student.isLeader = false;
 
       await student.save();
 
       return res.status(200).json({
         success: true,
-
         message: "Leader left team successfully",
       });
     }
@@ -173,28 +176,33 @@ exports.leaveTeam = async (req, res) => {
     // REMOVE NORMAL MEMBER
     // =====================
     team.members = team.members.filter(
-      (memberId) => memberId.toString() !== student._id.toString(),
+      (memberId) => memberId.toString() !== student._id.toString()
     );
 
     await team.save();
+
+    // notify remaining members
+    for (const memberId of team.members) {
+      await sendNotification(
+        memberId,
+        "Member Left Team",
+        `${student.name} left the team`
+      );
+    }
 
     // =====================
     // REMOVE TEAM ID
     // =====================
     student.team_id = null;
-
     student.isLeader = false;
 
     await student.save();
 
-    // =====================
-    // RESPONSE
-    // =====================
     res.status(200).json({
       success: true,
-
       message: "Left team successfully",
     });
+
   } catch (err) {
     console.log(err);
 
@@ -203,4 +211,3 @@ exports.leaveTeam = async (req, res) => {
     });
   }
 };
-
