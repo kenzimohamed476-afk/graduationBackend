@@ -3,6 +3,7 @@ const Student = require("../models/student");
 const sendNotification = require("../utils/sendNotification");
 const TeamInvitation = require("../models/teamInvitation");
 const SystemSettings = require("../models/systemSettings");
+const CurrentProject = require("../models/currentProject");
 exports.addMember = async (req, res) => {
   try {
     const { team_id, student_collegeCode } = req.body;
@@ -45,7 +46,7 @@ exports.addMember = async (req, res) => {
 
     // الطالب موجود بالفعل في الفريق
     const alreadyMember = team.members.some(
-      (memberId) => memberId.toString() === student._id.toString()
+      (memberId) => memberId.toString() === student._id.toString(),
     );
 
     if (alreadyMember) {
@@ -56,13 +57,13 @@ exports.addMember = async (req, res) => {
 
     // التحقق من الحد الأقصى
     // العدد الحالي = الليدر + الأعضاء
-const currentTeamSize = team.members.length + 1;
+    const currentTeamSize = team.members.length + 1;
 
-if (currentTeamSize >= maxTeamSize) {
-  return res.status(400).json({
-    message: `Team is full. Maximum size is ${maxTeamSize}`,
-  });
-}
+    if (currentTeamSize >= maxTeamSize) {
+      return res.status(400).json({
+        message: `Team is full. Maximum size is ${maxTeamSize}`,
+      });
+    }
 
     // إضافة الطالب للفريق
     team.members.push(student._id);
@@ -127,16 +128,11 @@ exports.leaveTeam = async (req, res) => {
     // IF STUDENT IS LEADER
     // =====================
     if (team.leader_id.toString() === student._id.toString()) {
-
       const currentTeamSize = team.members.length + 1;
 
       // لو بعد خروج الليدر العدد هيبقى أقل من الحد الأدنى
-      if ((currentTeamSize - 1) < minTeamSize) {
-
-        const allMembers = [
-          team.leader_id,
-          ...team.members,
-        ];
+      if (currentTeamSize - 1 < minTeamSize) {
+        const allMembers = [team.leader_id, ...team.members];
 
         for (const memberId of allMembers) {
           await Student.findByIdAndUpdate(memberId, {
@@ -144,7 +140,9 @@ exports.leaveTeam = async (req, res) => {
             isLeader: false,
           });
         }
-
+        if (team.project_id) {
+          await CurrentProject.findByIdAndDelete(team.project_id);
+        }
         await Team.findByIdAndDelete(team._id);
 
         return res.status(200).json({
@@ -168,7 +166,7 @@ exports.leaveTeam = async (req, res) => {
       }
 
       const isMember = team.members.some(
-        (memberId) => memberId.toString() === new_leader_id
+        (memberId) => memberId.toString() === new_leader_id,
       );
 
       if (!isMember) {
@@ -178,7 +176,7 @@ exports.leaveTeam = async (req, res) => {
       }
 
       team.members = team.members.filter(
-        (memberId) => memberId.toString() !== student._id.toString()
+        (memberId) => memberId.toString() !== student._id.toString(),
       );
 
       team.leader_id = new_leader_id;
@@ -189,7 +187,7 @@ exports.leaveTeam = async (req, res) => {
         await sendNotification(
           memberId,
           "Member Left Team",
-          `${student.name} left the team`
+          `${student.name} left the team`,
         );
       }
 
@@ -212,17 +210,13 @@ exports.leaveTeam = async (req, res) => {
     // REMOVE NORMAL MEMBER
     // =====================
     team.members = team.members.filter(
-      (memberId) => memberId.toString() !== student._id.toString()
+      (memberId) => memberId.toString() !== student._id.toString(),
     );
 
     const currentTeamSize = team.members.length + 1;
 
     if (currentTeamSize < minTeamSize) {
-
-      const allMembers = [
-        team.leader_id,
-        ...team.members,
-      ];
+      const allMembers = [team.leader_id, ...team.members];
 
       for (const memberId of allMembers) {
         await Student.findByIdAndUpdate(memberId, {
@@ -230,7 +224,9 @@ exports.leaveTeam = async (req, res) => {
           isLeader: false,
         });
       }
-
+      if (team.project_id) {
+        await CurrentProject.findByIdAndDelete(team.project_id);
+      }
       await Team.findByIdAndDelete(team._id);
 
       student.team_id = null;
@@ -250,7 +246,7 @@ exports.leaveTeam = async (req, res) => {
       await sendNotification(
         memberId,
         "Member Left Team",
-        `${student.name} left the team`
+        `${student.name} left the team`,
       );
     }
 
@@ -263,7 +259,6 @@ exports.leaveTeam = async (req, res) => {
       success: true,
       message: "Left team successfully",
     });
-
   } catch (err) {
     console.log(err);
 
