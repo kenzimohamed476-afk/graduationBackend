@@ -362,6 +362,81 @@ exports.getManagerDashboard = async (req, res) => {
 
   }
 };
+const User = require("../models/user");
+const CurrentProject = require("../models/currentProject");
+
+exports.getDoctorsWithProjects = async (req, res) => {
+  try {
+
+    const doctors = await User.find({
+      role: "doctor",
+    }).select("name email");
+
+    const doctorsWithProjects = await Promise.all(
+      doctors.map(async (doctor) => {
+
+        const projectsCount =
+          await CurrentProject.countDocuments({
+            doctor_id: doctor._id,
+          });
+
+        return {
+          _id: doctor._id,
+          name: doctor.name,
+          email: doctor.email,
+          projectsCount,
+        };
+      })
+    );
+
+    res.status(200).json({
+      doctors: doctorsWithProjects,
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+exports.getTAsWithProjects = async (req, res) => {
+  try {
+
+    const tas = await User.find({
+      role: "ta",
+    }).select("name email");
+
+    const tasWithProjects = await Promise.all(
+      tas.map(async (ta) => {
+
+        const projectsCount =
+          await CurrentProject.countDocuments({
+            ta_id: ta._id,
+          });
+
+        return {
+          _id: ta._id,
+          name: ta.name,
+          email: ta.email,
+          projectsCount,
+        };
+      })
+    );
+
+    res.status(200).json({
+      tas: tasWithProjects,
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
 exports.saveFcmToken = async (req, res) => {
   try {
     const { token } = req.body;

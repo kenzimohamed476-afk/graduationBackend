@@ -39,6 +39,16 @@ router.get(
   auth,
   userController.getManagerDashboard
 );
+router.get(
+  "/doctors-with-projects",
+  auth,
+  userController.getDoctorsWithProjects
+);
+router.get(
+  "/tas-with-projects",
+  auth,
+  userController.getTAsWithProjects
+);
 router.post("/add", userController.addUser);
 
 
