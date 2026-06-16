@@ -10,7 +10,7 @@ const PreviousProject = require("../models/previousProject");
 
 const CurrentProject = require("../models/currentProject");
 
-const SystemSettings = require("../models/systemSettings");
+
 exports.addUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
