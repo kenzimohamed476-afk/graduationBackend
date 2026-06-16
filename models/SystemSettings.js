@@ -14,7 +14,9 @@ const systemSettingsSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model(
-  "SystemSettings",
-  systemSettingsSchema
-);
+module.exports =
+  mongoose.models.SystemSettings ||
+  mongoose.model(
+    "SystemSettings",
+    systemSettingsSchema
+  );

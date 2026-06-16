@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 const sendNotification = require("../utils/sendNotification");
 const sendPushNotification = require("../utils/sendPushNotification");
 const { checkAISimilarity } = require("../utils/aiSimilarity");
-const SystemSettings = require("../models/systemSettings");
+const SystemSettings = require("../models/SystemSettings");
 const formatSpecialization = {
   ai: "AI",
   backend: "Backend",
