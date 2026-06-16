@@ -20,7 +20,6 @@ exports.getNotifications = async (req, res) => {
 };
 exports.sendChatNotification = async (req, res) => {
   try {
-
     const { receiver_id, sender_name, message } = req.body;
 
     let receiver = await Student.findById(receiver_id);
@@ -31,33 +30,30 @@ exports.sendChatNotification = async (req, res) => {
 
     if (!receiver) {
       return res.status(404).json({
-        message: "Receiver not found"
+        message: "Receiver not found",
       });
     }
 
     if (!receiver.fcm_token) {
       return res.status(200).json({
-        message: "Receiver has no FCM token"
+        message: "Receiver has no FCM token",
       });
     }
 
     await admin.messaging().send({
       token: receiver.fcm_token,
       notification: {
-        title: sender_name,
-        body: message
-      }
+        title: "New Message",
+        body: `Message from ${sender_name}`,
+      },
     });
 
     res.status(200).json({
-      message: "Notification sent successfully"
+      message: "Notification sent successfully",
     });
-
   } catch (err) {
-
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
-
   }
 };
