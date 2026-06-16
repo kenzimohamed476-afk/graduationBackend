@@ -333,6 +333,35 @@ exports.submitProjectDocumentation = async (req, res) => {
   }
 };
 
+exports.getManagerDashboard = async (req, res) => {
+  try {
+
+    const totalDoctors = await User.countDocuments({
+      role: "doctor",
+    });
+
+    const totalTAs = await User.countDocuments({
+      role: "ta",
+    });
+
+    const totalProjects = await CurrentProject.countDocuments({
+      status: "ongoing",
+    });
+
+    res.status(200).json({
+      totalDoctors,
+      totalTAs,
+      totalProjects,
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
 exports.saveFcmToken = async (req, res) => {
   try {
     const { token } = req.body;

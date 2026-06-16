@@ -34,6 +34,12 @@ router.get(
   auth,
   userController.getCurrentProjectsForLibrary,
 );
+router.get(
+  "/manager/dashboard",
+  auth,
+  userController.getManagerDashboard
+);
 router.post("/add", userController.addUser);
+
 
 module.exports = router;
