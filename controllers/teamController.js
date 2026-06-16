@@ -3,6 +3,7 @@ const Student = require("../models/student");
 const sendNotification = require("../utils/sendNotification");
 const TeamInvitation = require("../models/teamInvitation");
 const CurrentProject = require("../models/currentProject");
+const SystemSettings = require("../models/systemSettings");
 exports.addMember = async (req, res) => {
   try {
     const { team_id, student_collegeCode } = req.body;
