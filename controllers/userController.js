@@ -362,8 +362,6 @@ exports.getManagerDashboard = async (req, res) => {
 
   }
 };
-const User = require("../models/user");
-const CurrentProject = require("../models/currentProject");
 
 exports.getDoctorsWithProjects = async (req, res) => {
   try {
