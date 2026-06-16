@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 const sendNotification = require("../utils/sendNotification");
 const sendPushNotification = require("../utils/sendPushNotification");
 const { checkAISimilarity } = require("../utils/aiSimilarity");
+const SystemSettings = require("../models/systemSettings");
 const formatSpecialization = {
   ai: "AI",
   backend: "Backend",
@@ -87,9 +88,13 @@ exports.checkSimilarity = async (req, res) => {
     // =====================
     // MAX MEMBERS
     // =====================
-    if (memberIds.length > 5) {
+    const settings = await SystemSettings.findOne();
+
+    const maxTeamSize = settings?.max_team_size || 5;
+
+    if (memberIds.length > maxTeamSize) {
       return res.status(400).json({
-        message: "Max 5 members allowed",
+        message: `Max ${maxTeamSize} members allowed`,
       });
     }
 
@@ -170,18 +175,13 @@ exports.checkSimilarity = async (req, res) => {
     // REMOVE CURRENT TEAM PROJECT
     // =====================
     const allProjects = [
+      ...previousProjects.filter((p) => p.description),
 
-  ...previousProjects.filter(
-    (p) => p.description
-  ),
-
-  ...currentProjects.filter(
-    (p) =>
-      p.description &&
-      p.team_id?.toString()
-      !== finalTeam?._id?.toString(),
-  ),
-];
+      ...currentProjects.filter(
+        (p) =>
+          p.description && p.team_id?.toString() !== finalTeam?._id?.toString(),
+      ),
+    ];
     // =====================
     // AI CHECK
     // =====================
@@ -365,11 +365,11 @@ exports.addProject = async (req, res) => {
 
     await team.save();
 
-await sendNotification(
-  doctor_id,
-  "New Project Submission",
-  `${title} is waiting for your review`
-);
+    await sendNotification(
+      doctor_id,
+      "New Project Submission",
+      `${title} is waiting for your review`,
+    );
 
     // =====================
     // RESPONSE
@@ -459,100 +459,96 @@ exports.updateStatus = async (req, res) => {
     // =====================
     // UPDATE STATUS
     // =====================
-   if (req.user.role === "doctor") {
-  project.doctor_status = status;
+    if (req.user.role === "doctor") {
+      project.doctor_status = status;
 
-  if (status === "approved") {
+      if (status === "approved") {
+        await sendNotification(
+          project.ta_id,
+          "Project Waiting For Review",
+          `${project.title} is waiting for your review`,
+        );
 
-    await sendNotification(
-      project.ta_id,
-      "Project Waiting For Review",
-      `${project.title} is waiting for your review`
-    );
+        const team = await Team.findById(project.team_id);
 
-    const team = await Team.findById(project.team_id);
-
-    for (const memberId of team.members) {
-      await sendNotification(
-        memberId,
-        "Doctor Approved",
-        `${project.title} has been approved by the doctor and sent to the teaching assistant`
-      );
+        for (const memberId of team.members) {
+          await sendNotification(
+            memberId,
+            "Doctor Approved",
+            `${project.title} has been approved by the doctor and sent to the teaching assistant`,
+          );
+        }
+      }
     }
-  }
-}
 
     if (req.user.role === "ta") {
       project.ta_status = status;
     }
-    if (
-  req.user.role === "ta" &&
-  status === "rejected"
-) {
-  const team = await Team.findById(project.team_id);
+    if (req.user.role === "ta" && status === "rejected") {
+      const team = await Team.findById(project.team_id);
 
-  for (const memberId of team.members) {
-    await sendNotification(
-      memberId,
-      "Project Rejected",
-      `${project.title} was rejected by the teaching assistant`
-    );
-  }
-}
+      for (const memberId of team.members) {
+        await sendNotification(
+          memberId,
+          "Project Rejected",
+          `${project.title} was rejected by the teaching assistant`,
+        );
+      }
+    }
 
-if (project.doctor_status === "rejected") {
-  // FINAL STATUS
-  project.status = "rejected";
+    if (project.doctor_status === "rejected") {
+      // FINAL STATUS
+      project.status = "rejected";
 
-  // REMOVE TA STATUS
-  project.ta_status = null;
+      // REMOVE TA STATUS
+      project.ta_status = null;
 
-  // REMOVE TA
-  project.ta_id = null;
+      // REMOVE TA
+      project.ta_id = null;
 
-  const team = await Team.findById(project.team_id);
+      const team = await Team.findById(project.team_id);
 
-  for (const memberId of team.members) {
-    await sendNotification(
-      memberId,
-      "Project Rejected",
-      `${project.title} was rejected by the doctor`
-    );
-  }
-}
+      for (const memberId of team.members) {
+        await sendNotification(
+          memberId,
+          "Project Rejected",
+          `${project.title} was rejected by the doctor`,
+        );
+      }
+    }
     // =====================
     // FINAL APPROVAL
     // =====================
     if (
-  project.doctor_status === "approved" &&
-  project.ta_status === "approved"
-) {
-  project.status = "approved";
+      project.doctor_status === "approved" &&
+      project.ta_status === "approved"
+    ) {
+      project.status = "approved";
 
-  // إشعار للأدمن
-  const admins = await User.find({
-    role: "admin",
-  });
+      // إشعار للأدمن
+      const admins = await User.find({
+        role: "admin",
+      });
 
-  for (const admin of admins) {
-    await sendNotification(
-      admin._id,
-      "Project Ready For Approval",
-      `${project.title} is waiting for final approval`
-    );
-  }
+      for (const admin of admins) {
+        await sendNotification(
+          admin._id,
+          "Project Ready For Approval",
+          `${project.title} is waiting for final approval`,
+        );
+      }
 
-  // إشعار لأعضاء التيم
-  const team = await Team.findById(project.team_id);
+      // إشعار لأعضاء التيم
+      const team = await Team.findById(project.team_id);
 
-  for (const memberId of team.members) {
-    await sendNotification(
-      memberId,
-      "TA Approved",
-      `${project.title} has been approved by the teaching assistant and sent to admin`
-    );
-  }
-}
+      for (const memberId of team.members) {
+        await sendNotification(
+          memberId,
+          "TA Approved",
+          `${project.title} has been approved by the teaching assistant and sent to admin`,
+        );
+      }
+    }
 
     // =====================
     // SAVE
@@ -606,33 +602,26 @@ exports.uploadDocumentation = async (req, res) => {
 };
 exports.sendDocumentationReminder = async (req, res) => {
   try {
-
     const projects = await CurrentProject.find({
       documentation: null,
-      documentation_deadline: { $ne: null }
+      documentation_deadline: { $ne: null },
     });
 
     let count = 0;
 
     for (const project of projects) {
-
       const team = await Team.findById(project.team_id);
 
       if (!team) continue;
 
-      const members = [
-        team.leader_id,
-        ...team.members
-      ];
+      const members = [team.leader_id, ...team.members];
 
       for (const memberId of members) {
-
         await sendNotification(
           memberId,
           "Documentation Reminder",
-          "Please submit your documentation before the deadline"
+          "Please submit your documentation before the deadline",
         );
-
       }
 
       count++;
@@ -640,15 +629,12 @@ exports.sendDocumentationReminder = async (req, res) => {
 
     res.status(200).json({
       message: "Documentation reminders sent successfully",
-      count
+      count,
     });
-
   } catch (err) {
-
     res.status(500).json({
-      message: err.message
+      message: err.message,
     });
-
   }
 };
 exports.finalizeProject = async (req, res) => {
@@ -1090,7 +1076,7 @@ exports.changeTA = async (req, res) => {
     await sendNotification(
       ta_id,
       "New Project Assigned",
-      `${project.title} is waiting for your review`
+      `${project.title} is waiting for your review`,
     );
     // =====================
     // RESPONSE
@@ -1233,24 +1219,23 @@ exports.adminApproveProject = async (req, res) => {
     await project.save();
     const team = await Team.findById(project.team_id);
 
-for (const memberId of team.members) {
+    for (const memberId of team.members) {
+      await sendNotification(
+        memberId,
+        "Project Approved",
+        `Your project ${project.title} has been approved and assigned code ${project.project_code}`,
+      );
 
-  await sendNotification(
-    memberId,
-    "Project Approved",
-    `Your project ${project.title} has been approved and assigned code ${project.project_code}`
-  );
+      const student = await Student.findById(memberId);
 
-  const student = await Student.findById(memberId);
-
-  if (student?.fcm_token) {
-    await sendPushNotification(
-      student.fcm_token,
-      "Project Approved",
-      `Your project ${project.title} has been approved and assigned code ${project.project_code}`
-    );
-  }
-}
+      if (student?.fcm_token) {
+        await sendPushNotification(
+          student.fcm_token,
+          "Project Approved",
+          `Your project ${project.title} has been approved and assigned code ${project.project_code}`,
+        );
+      }
+    }
 
     // =====================
     // RESPONSE

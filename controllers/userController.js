@@ -10,6 +10,7 @@ const PreviousProject = require("../models/previousProject");
 
 const CurrentProject = require("../models/currentProject");
 
+const SystemSettings = require("../models/systemSettings");
 exports.addUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -425,6 +426,76 @@ exports.getTAsWithProjects = async (req, res) => {
 
     res.status(200).json({
       tas: tasWithProjects,
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+exports.getSystemSettings = async (req, res) => {
+  try {
+
+    let settings = await SystemSettings.findOne();
+
+    if (!settings) {
+      settings = await SystemSettings.create({});
+    }
+
+    res.status(200).json({
+      settings,
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+exports.updateSystemSettings = async (req, res) => {
+  try {
+
+    const {
+      documentation_deadline,
+      min_team_size,
+      max_team_size,
+    } = req.body;
+
+    let settings = await SystemSettings.findOne();
+
+    if (!settings) {
+
+      settings = await SystemSettings.create({
+        documentation_deadline,
+        min_team_size,
+        max_team_size,
+      });
+
+    } else {
+
+      settings.documentation_deadline =
+        documentation_deadline;
+
+      settings.min_team_size =
+        min_team_size;
+
+      settings.max_team_size =
+        max_team_size;
+
+      await settings.save();
+    }
+
+    res.status(200).json({
+      message: "System settings updated successfully",
+      settings,
     });
 
   } catch (err) {

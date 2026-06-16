@@ -2,11 +2,10 @@ const Team = require("../models/team");
 const Student = require("../models/student");
 const sendNotification = require("../utils/sendNotification");
 const TeamInvitation = require("../models/teamInvitation");
-
+const SystemSettings = require("../models/systemSettings");
 exports.addMember = async (req, res) => {
   try {
     const { team_id, student_collegeCode } = req.body;
-
     const userId = req.user.id;
 
     const team = await Team.findById(team_id);
@@ -16,56 +15,72 @@ exports.addMember = async (req, res) => {
         message: "Team not found",
       });
     }
+
     if (team.leader_id.toString() !== userId) {
       return res.status(403).json({
         message: "Only leader can add members",
       });
     }
+
     const student = await Student.findOne({
       collegeCode: Number(student_collegeCode),
     });
+
     if (!student) {
       return res.status(400).json({
         message: "Invalid student college code",
       });
     }
 
-    //  لو الطالب بالفعل في team
+    // الطالب بالفعل في فريق
     if (student.team_id) {
       return res.status(400).json({
         message: "Student already in a team",
       });
     }
 
-    // منع التكرار
-    if (team.members.includes(student._id)) {
+    // إعدادات النظام
+    const settings = await SystemSettings.findOne();
+    const maxTeamSize = settings?.max_team_size || 5;
+
+    // الطالب موجود بالفعل في الفريق
+    const alreadyMember = team.members.some(
+      (memberId) => memberId.toString() === student._id.toString()
+    );
+
+    if (alreadyMember) {
       return res.status(400).json({
         message: "Student already in this team",
       });
     }
 
-    //  حد أقصى للأعضاء
-    if (team.members.length >= 5) {
-      return res.status(400).json({
-        message: "Team is full",
-      });
-    }
+    // التحقق من الحد الأقصى
+    // العدد الحالي = الليدر + الأعضاء
+const currentTeamSize = team.members.length + 1;
 
-    //  إضافة الطالب للتيم
+if (currentTeamSize >= maxTeamSize) {
+  return res.status(400).json({
+    message: `Team is full. Maximum size is ${maxTeamSize}`,
+  });
+}
+
+    // إضافة الطالب للفريق
     team.members.push(student._id);
     await team.save();
 
-    //  تحديث الطالب
+    // تحديث بيانات الطالب
     student.team_id = team._id;
     await student.save();
 
-    //  response
-    res.json({
+    return res.status(200).json({
+      success: true,
       message: "Member added successfully",
       team,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
@@ -105,29 +120,40 @@ exports.leaveTeam = async (req, res) => {
       });
     }
 
+    const settings = await SystemSettings.findOne();
+    const minTeamSize = settings?.min_team_size || 2;
+
     // =====================
     // IF STUDENT IS LEADER
     // =====================
     if (team.leader_id.toString() === student._id.toString()) {
-      const { new_leader_id } = req.body;
 
-      // Check if there's only 1 member left (will be 0 after leader leaves)
-      // In this case, delete the team
-      if (team.members.length < 2) {
-        // Delete the team
-        await Team.findByIdAndDelete(student.team_id);
+      const currentTeamSize = team.members.length + 1;
 
-        // remove old leader from team
-        student.team_id = null;
-        student.isLeader = false;
+      // لو بعد خروج الليدر العدد هيبقى أقل من الحد الأدنى
+      if ((currentTeamSize - 1) < minTeamSize) {
 
-        await student.save();
+        const allMembers = [
+          team.leader_id,
+          ...team.members,
+        ];
+
+        for (const memberId of allMembers) {
+          await Student.findByIdAndUpdate(memberId, {
+            team_id: null,
+            isLeader: false,
+          });
+        }
+
+        await Team.findByIdAndDelete(team._id);
 
         return res.status(200).json({
           success: true,
           message: "Team disbanded due to insufficient members",
         });
       }
+
+      const { new_leader_id } = req.body;
 
       if (!new_leader_id) {
         return res.status(400).json({
@@ -151,17 +177,14 @@ exports.leaveTeam = async (req, res) => {
         });
       }
 
-      // remove old leader
       team.members = team.members.filter(
         (memberId) => memberId.toString() !== student._id.toString()
       );
 
-      // set new leader
       team.leader_id = new_leader_id;
 
       await team.save();
 
-      // notify remaining members
       for (const memberId of team.members) {
         await sendNotification(
           memberId,
@@ -170,15 +193,10 @@ exports.leaveTeam = async (req, res) => {
         );
       }
 
-      // make new leader
-      await Student.findByIdAndUpdate(
-        new_leader_id,
-        {
-          isLeader: true,
-        }
-      );
+      await Student.findByIdAndUpdate(new_leader_id, {
+        isLeader: true,
+      });
 
-      // remove old leader from team
       student.team_id = null;
       student.isLeader = false;
 
@@ -197,22 +215,24 @@ exports.leaveTeam = async (req, res) => {
       (memberId) => memberId.toString() !== student._id.toString()
     );
 
-    // Check if team will have minimum 2 members (leader + at least 1 member)
-    // If only leader remains, delete the team
-    if (team.members.length < 1) {
-      // Delete the team (only leader left)
-      await Team.findByIdAndDelete(team._id);
+    const currentTeamSize = team.members.length + 1;
 
-      // Update leader to remove team_id
-      await Student.findByIdAndUpdate(
+    if (currentTeamSize < minTeamSize) {
+
+      const allMembers = [
         team.leader_id,
-        {
+        ...team.members,
+      ];
+
+      for (const memberId of allMembers) {
+        await Student.findByIdAndUpdate(memberId, {
           team_id: null,
           isLeader: false,
-        }
-      );
+        });
+      }
 
-      // Remove team from current student
+      await Team.findByIdAndDelete(team._id);
+
       student.team_id = null;
       student.isLeader = false;
 
@@ -226,7 +246,6 @@ exports.leaveTeam = async (req, res) => {
 
     await team.save();
 
-    // notify remaining members
     for (const memberId of team.members) {
       await sendNotification(
         memberId,
@@ -235,15 +254,12 @@ exports.leaveTeam = async (req, res) => {
       );
     }
 
-    // =====================
-    // REMOVE TEAM ID
-    // =====================
     student.team_id = null;
     student.isLeader = false;
 
     await student.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Left team successfully",
     });
@@ -251,7 +267,7 @@ exports.leaveTeam = async (req, res) => {
   } catch (err) {
     console.log(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: err.message,
     });
   }

@@ -49,6 +49,17 @@ router.get(
   auth,
   userController.getTAsWithProjects
 );
+router.get(
+  "/system-settings",
+  auth,
+  userController.getSystemSettings
+);
+
+router.put(
+  "/system-settings",
+  auth,
+  userController.updateSystemSettings
+);
 router.post("/add", userController.addUser);
 
 
