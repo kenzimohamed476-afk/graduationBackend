@@ -969,6 +969,34 @@ exports.getTADashboard = async (req, res) => {
     });
   }
 };
+exports.getApprovedTAProjects = async (req, res) => {
+  try {
+
+    const projects = await CurrentProject.find({
+      ta_id: req.user.id,
+      status: "approved",
+    })
+      .populate("doctor_id", "name")
+      .populate({
+        path: "team_id",
+        populate: {
+          path: "members",
+          select: "name collegeCode",
+        },
+      });
+
+    res.status(200).json({
+      projects,
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
 exports.changeTA = async (req, res) => {
   try {
     // =====================

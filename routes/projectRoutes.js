@@ -38,4 +38,10 @@ router.post(
   allowRoles("manager", "librarian"),
   projectController.sendDocumentationReminder
 ); 
+router.get(
+  "/ta/approved-projects",
+  auth,
+  allowRoles("ta"),
+  projectController.getApprovedTAProjects
+);
 module.exports = router;
