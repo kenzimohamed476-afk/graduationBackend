@@ -360,36 +360,6 @@ exports.getManagerDashboard = async (req, res) => {
   }
 };
 
-exports.getDoctorsWithProjects = async (req, res) => {
-  try {
-    const doctors = await User.find({
-      role: "doctor",
-    }).select("name email");
-
-    const doctorsWithProjects = await Promise.all(
-      doctors.map(async (doctor) => {
-        const projectsCount = await CurrentProject.countDocuments({
-          doctor_id: doctor._id,
-        });
-
-        return {
-          _id: doctor._id,
-          name: doctor.name,
-          email: doctor.email,
-          projectsCount,
-        };
-      }),
-    );
-
-    res.status(200).json({
-      doctors: doctorsWithProjects,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
-  }
-};
 exports.getTAsWithProjects = async (req, res) => {
   try {
     const tas = await User.find({
@@ -463,7 +433,7 @@ exports.updateSystemSettings = async (req, res) => {
       settings.min_team_size = min_team_size;
 
       settings.max_team_size = max_team_size;
-      
+
       settings.max_projects_per_doctor = max_projects_per_doctor;
 
       await settings.save();
@@ -477,6 +447,49 @@ exports.updateSystemSettings = async (req, res) => {
     res.status(500).json({
       message: err.message,
     });
+  }
+};
+exports.getDoctorsWithProjects = async (req, res) => {
+  try {
+
+    const settings = await SystemSettings.findOne();
+
+    const maxProjects =
+      settings?.max_projects_per_doctor || 5;
+
+    const doctors = await User.find({
+      role: "doctor",
+    });
+
+    const result = [];
+
+    for (const doctor of doctors) {
+
+      const currentProjects =
+        await CurrentProject.countDocuments({
+          doctor_id: doctor._id,
+        });
+
+      result.push({
+        _id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        currentProjects,
+        maxProjects,
+        available: currentProjects < maxProjects,
+      });
+    }
+
+    return res.status(200).json({
+      doctors: result,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      message: err.message,
+    });
+
   }
 };
 exports.saveFcmToken = async (req, res) => {

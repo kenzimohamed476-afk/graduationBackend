@@ -60,7 +60,11 @@ router.put(
   auth,
   userController.updateSystemSettings
 );
+
+router.get(
+  "/doctors-with-projects",
+  auth,
+  userController.getDoctorsWithProjects
+);
 router.post("/add", userController.addUser);
-
-
 module.exports = router;
