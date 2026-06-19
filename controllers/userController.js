@@ -336,7 +336,6 @@ exports.submitProjectDocumentation = async (req, res) => {
 
 exports.getManagerDashboard = async (req, res) => {
   try {
-
     const totalDoctors = await User.countDocuments({
       role: "doctor",
     });
@@ -354,30 +353,24 @@ exports.getManagerDashboard = async (req, res) => {
       totalTAs,
       totalProjects,
     });
-
   } catch (err) {
-
     res.status(500).json({
       message: err.message,
     });
-
   }
 };
 
 exports.getDoctorsWithProjects = async (req, res) => {
   try {
-
     const doctors = await User.find({
       role: "doctor",
     }).select("name email");
 
     const doctorsWithProjects = await Promise.all(
       doctors.map(async (doctor) => {
-
-        const projectsCount =
-          await CurrentProject.countDocuments({
-            doctor_id: doctor._id,
-          });
+        const projectsCount = await CurrentProject.countDocuments({
+          doctor_id: doctor._id,
+        });
 
         return {
           _id: doctor._id,
@@ -385,35 +378,29 @@ exports.getDoctorsWithProjects = async (req, res) => {
           email: doctor.email,
           projectsCount,
         };
-      })
+      }),
     );
 
     res.status(200).json({
       doctors: doctorsWithProjects,
     });
-
   } catch (err) {
-
     res.status(500).json({
       message: err.message,
     });
-
   }
 };
 exports.getTAsWithProjects = async (req, res) => {
   try {
-
     const tas = await User.find({
       role: "ta",
     }).select("name email");
 
     const tasWithProjects = await Promise.all(
       tas.map(async (ta) => {
-
-        const projectsCount =
-          await CurrentProject.countDocuments({
-            ta_id: ta._id,
-          });
+        const projectsCount = await CurrentProject.countDocuments({
+          ta_id: ta._id,
+        });
 
         return {
           _id: ta._id,
@@ -421,26 +408,21 @@ exports.getTAsWithProjects = async (req, res) => {
           email: ta.email,
           projectsCount,
         };
-      })
+      }),
     );
 
     res.status(200).json({
       tas: tasWithProjects,
     });
-
   } catch (err) {
-
     res.status(500).json({
       message: err.message,
     });
-
   }
 };
 
-
 exports.getSystemSettings = async (req, res) => {
   try {
-
     let settings = await SystemSettings.findOne();
 
     if (!settings) {
@@ -450,45 +432,39 @@ exports.getSystemSettings = async (req, res) => {
     res.status(200).json({
       settings,
     });
-
   } catch (err) {
-
     res.status(500).json({
       message: err.message,
     });
-
   }
 };
 
 exports.updateSystemSettings = async (req, res) => {
   try {
-
     const {
       documentation_deadline,
       min_team_size,
       max_team_size,
+      max_projects_per_doctor,
     } = req.body;
 
     let settings = await SystemSettings.findOne();
 
     if (!settings) {
-
       settings = await SystemSettings.create({
         documentation_deadline,
         min_team_size,
         max_team_size,
+        max_projects_per_doctor,
       });
-
     } else {
+      settings.documentation_deadline = documentation_deadline;
 
-      settings.documentation_deadline =
-        documentation_deadline;
+      settings.min_team_size = min_team_size;
 
-      settings.min_team_size =
-        min_team_size;
-
-      settings.max_team_size =
-        max_team_size;
+      settings.max_team_size = max_team_size;
+      
+      settings.max_projects_per_doctor = max_projects_per_doctor;
 
       await settings.save();
     }
@@ -497,13 +473,10 @@ exports.updateSystemSettings = async (req, res) => {
       message: "System settings updated successfully",
       settings,
     });
-
   } catch (err) {
-
     res.status(500).json({
       message: err.message,
     });
-
   }
 };
 exports.saveFcmToken = async (req, res) => {

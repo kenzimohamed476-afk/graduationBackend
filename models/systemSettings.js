@@ -15,6 +15,10 @@ const systemSettingsSchema = new mongoose.Schema({
     type: Number,
     default: 5,
   },
+max_projects_per_doctor: {
+  type: Number,
+  default: 5
+}
 });
 
 module.exports =
