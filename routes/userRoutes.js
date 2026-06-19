@@ -40,11 +40,6 @@ router.get(
   userController.getManagerDashboard
 );
 router.get(
-  "/doctors-with-projects",
-  auth,
-  userController.getDoctorsWithProjects
-);
-router.get(
   "/tas-with-projects",
   auth,
   userController.getTAsWithProjects
